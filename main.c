@@ -22,7 +22,7 @@ int main()
 
 	doARM11Hax();
 
-	consoleClear();
+	//consoleClear();
 
 	while (aptMainLoop())
 	{
@@ -39,9 +39,18 @@ int main()
 			break;
 		}
 
-		consoleClear();
-		printf("%x ", arm11_buffer[0]);
-
+		if (kDown & KEY_A)
+		{
+			consoleClear();
+			printf("%x \n", arm11_buffer[0]);
+			int i;
+			for(i = 0; i < 0x80; i += 4)
+			{
+				printf("%x ", arm11_buffer[1+i]);
+				if((i/4) % 4 == 0 && i != 0)
+					printf("\n");
+			}
+		}
 		// Flush and swap framebuffers
 		gfxFlushBuffers();
 		gfxSwapBuffers();
