@@ -1,3 +1,5 @@
+.arm
+
 .global InvalidateEntireInstructionCache
 .type InvalidateEntireInstructionCache, %function
 InvalidateEntireInstructionCache:
@@ -11,3 +13,4 @@ InvalidateEntireDataCache:
 	mov r0, #0
 	mcr p15, 0, r0, c7, c10, 0
 	bx lr
+svc 0x35

