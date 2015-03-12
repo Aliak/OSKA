@@ -17,24 +17,6 @@ unsigned int *arm11_buffer;
 //Uncomment to have progress printed w/ printf
 #define DEBUG_PROCESS
 
-void invalidateInstructionCache(void){
-    __asm__(
-        "mcr p15,0,%0,c7,c5,0\t\n"
-        "mcr p15,0,%0,c7,c5,4\t\n"
-        "mcr p15,0,%0,c7,c5,6\t\n"
-        "mcr p15,0,%0,c7,c10,4\t\n"
-        :: "r" (0)
-    );
-}
- 
-void invalidateDataCache(void) {
-    __asm__(
-        "mcr p15,0,%0,c7,c14,0\t\n"
-        "mcr p15,0,%0,c7,c10,4\t\n"
-        :: "r" (0)
-    );
-}
-
 void sub_20CC(void){
 	__asm__ ("LDR R1, =0xFFFCC48C\t\n"
 	  		  "1:\t\n"
@@ -265,19 +247,33 @@ void jump_table(void)
  	reboot_func();
 }
 
-void test(void)
+void sub_1E8C(void){
+	__asm__ ("ADD R2, R1, R2\t\n"
+	  		  "17:\t\n"
+	           "LDMIA R1!, {R3}\t\n"
+	           "STMIA R0!, {R3}\t\n"
+	           "CMP R1, R2\t\n"
+	           "BCC 17b\t\n"
+	           "BX LR");
+}
+
+void doArm9Hax(void)
 {
+#ifdef DEBUG_PROCESS
+	printf("Setting up Arm9\n");
+#endif
+
 	int (*reboot)(int, int, int, int) = 0xFFF748C4;
+
 	__asm__ ("clrex");
 
-	*(int *)0xDFF8383F = 0x8DD00CE5;
-	invalidateDataCache();
-	invalidateInstructionCache();
+	CleanEntireDataCache();
+	InvalidateEntireInstructionCache();
 
 	// ARM9 code copied to FCRAM 0x23F00000
 	//memcpy(0xF3F00000, ARM9_PAYLOAD, ARM9_PAYLOAD_LEN);
 	// write function hook at 0xFFFF0C80
-	memcpy(0xEFFF4C80, 0x9D2580, 0x9D23AC);
+	//memcpy(0xEFFF4C80, 0x9D23AC, 0x9D2580);
 
 	// write FW specific offsets to copied code buffer
 	*(int *)(0xEFFF4C80 + 0x60) = 0xFFFD0000; // PDN regs
@@ -289,17 +285,22 @@ void test(void)
 	*(int *)(0xFFF84DD4 + 4) = 0xFFFF0C80; // jump_table + 0
 	// patch reboot start function to jump to our hook
 	*(int *)(0xFFFF097C + 0) = 0xE51FF004; // ldr pc, [pc, #-4]
-	*(int *)(0xFFFF097C + 4) = 0x1FFF4C84; // jump_table + 4
+	*(int *)(0xFFFF097C + 4) = 0x8F028C4; // jump_table + 4
 
-	invalidateDataCache();
+	InvalidateEntireInstructionCache();
+
+	printf("test1\n");
 
 	reboot(0, 0, 2, 0); // trigger reboot
+}
 
+void test(void)
+{
+	arm11_buffer[0] = 0xFEEFF00F;
 }
 
 void func_patch_hook(void)
 {
-	printf("Patching function\n");
 
   // data written from entry
  	int pdn_regs;
@@ -335,8 +336,6 @@ void func_patch_hook(void)
 // this is a patched version of function 0xFFFF097C
 void reboot_func(void)
 {
-	printf("Rebooting\n");
-
 	__asm__ ("ADR R0, 15f\t\n"
           "ADR R1, 12f\t\n"
           "LDR R2, =0x1FFFFC00\t\n"
@@ -422,7 +421,7 @@ arm11_kernel_exec (void)
 		patched_svc = 1;
 	}
 	InvalidateEntireInstructionCache();
-	InvalidateEntireDataCache();
+	CleanEntireDataCache();
 
 	return 0;
 }
@@ -487,6 +486,12 @@ int doARM11Hax()
 			printf("Testing SVC 0x7B\n");
 #endif
 			arm11_kernel_execute (test);
+
+			doArm9Hax();
+
+#ifdef DEBUG_PROCESS
+			printf("Arm9 setup\n");
+#endif
 		}
 
 	}

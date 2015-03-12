@@ -1,5 +1,3 @@
-.arm
-
 .global InvalidateEntireInstructionCache
 .type InvalidateEntireInstructionCache, %function
 InvalidateEntireInstructionCache:
@@ -7,10 +5,22 @@ InvalidateEntireInstructionCache:
 	mcr p15, 0, r0, c7, c5, 0
 	bx lr
 
-.global InvalidateEntireDataCache
-.type InvalidateEntireDataCache, %function
-InvalidateEntireDataCache:
+.global CleanEntireDataCache
+.type CleanEntireDataCache, %function
+CleanEntireDataCache:
 	mov r0, #0
 	mcr p15, 0, r0, c7, c10, 0
 	bx lr
-svc 0x35
+
+.global DisableInterrupts
+.type DisableInterrupts, %function
+DisableInterrupts:
+	mrs r0, cpsr
+	CPSID I
+	bx lr
+	
+.global EnableInterrupts
+.type EnableInterrupts, %function
+EnableInterrupts:
+	msr cpsr_cx, r0
+	bx lr
