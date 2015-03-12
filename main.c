@@ -4,7 +4,7 @@
 #include <string.h>
 #include <malloc.h>
 #include <dirent.h>
-#include "oska.h"
+#include "bootstrap.h"
 
 void waitKey() {
 	while (aptMainLoop())
@@ -17,7 +17,7 @@ void waitKey() {
 		u32 kDown = hidKeysDown();
 		u32 kHeld = hidKeysHeld();
 		
-		// If B is pressed, break loop and quit
+		// If START is pressed, break loop and quit
 		if (kDown & KEY_X){
 			break;
 		}
@@ -40,14 +40,12 @@ int main()
 	hbInit();
 
 	qtmInit();
-	consoleInit(GFX_BOTTOM, NULL);
+	consoleInit(GFX_TOP, NULL);
 
-	svcSleepThread(1000000000);
+	doARM11Hax();
 
-	run_exploit();
-
-	//consoleClear();	                     
-	printf("\nPress [X] to return to launcher\n");
+	//consoleClear();
+	printf("%x\n", arm11_buffer[0]);
 
 	waitKey();
 
