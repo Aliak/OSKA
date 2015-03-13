@@ -13,7 +13,6 @@ static int32_t *buf;
 static int32_t *createThreadPatchPtr;
 static int32_t *svcPatchPtr;
 static int svcIsPatched = 0;
-static u8 isN3DS = 0;
 
 // Uncomment to have progress printed w/ printf
 #define DEBUG_PROCESS
@@ -47,80 +46,78 @@ static int gshaxCopy(void *dst, void *src, unsigned int len)
 static int getPatchPtr()
 {
 	int32_t ver;
+	u8 isN3DS;
 
 	// Get proper patch address for our kernel -- thanks yifanlu once again
 	ver = *(int32_t *)0x1FF80000; // KERNEL_VERSION register
 	createThreadPatchPtr = NULL;
 	svcPatchPtr = NULL;
-	APT_CheckNew3DS(NULL, &isN3DS);
 
-	if (!isN3DS)
-		switch(ver) {
-			case 0x022C0600: // 2.44-6 8.0.0
-			case 0x022E0000: // 2.26-0 9.0.0
-				createThreadPatchPtr = (void *)0xDFF8382F;
-				svcPatchPtr = (void *)0xDFF82260;
-				break;
+	if (ver >= 0x022C0600) {
+		APT_CheckNew3DS(NULL, &isN3DS);
+		if (isN3DS) {
+			switch(ver) {
+				case 0x022C0600: // 2.44-6 8.0.0
+				case 0x022E0000: // 2.26-0 9.0.0
+					createThreadPatchPtr = (void *)0xDFF8382F;
+					svcPatchPtr = (void *)0xDFF82260;
+					return 0;
 
-			default:
+				default:
 #ifdef DEBUG_PROCESS
-				printf("Unrecognized kernel version %" PRIx32 ", returning...\n",
-					ver);
+					printf("Unrecognized kernel version %" PRIx32 ", returning...\n",
+						ver);
 #endif
-				return 0;
+					return 1;
+			}
 		}
-	else
-		switch (ver) {
-			case 0x02220000: // 2.34-0 4.1.0
-				createThreadPatchPtr = (void *)0xEFF83C97;
-				svcPatchPtr = (void *)0xEFF827CC;
-				break;
+	}
 
-			case 0x02230600: // 2.35-6 5.0.0
-				createThreadPatchPtr = (void *)0xEFF8372F;
-				svcPatchPtr = (void *)0xEFF822A8;
-				break;
+	switch (ver) {
+		case 0x02220000: // 2.34-0 4.1.0
+			createThreadPatchPtr = (void *)0xEFF83C97;
+			svcPatchPtr = (void *)0xEFF827CC;
+			return 0;
 
-			case 0x02240000: // 2.36-0 5.1.0
-			case 0x02250000: // 2.37-0 6.0.0
-			case 0x02260000: // 2.38-0 6.1.0
-				createThreadPatchPtr = (void *)0xEFF8372B;
-				svcPatchPtr = (void *)0xEFF822A4;
-				break;
+		case 0x02230600: // 2.35-6 5.0.0
+			createThreadPatchPtr = (void *)0xEFF8372F;
+			svcPatchPtr = (void *)0xEFF822A8;
+			return 0;
 
-			case 0x02270400: // 2.39-4 7.0.0
-				createThreadPatchPtr = (void *)0xEFF8372F;
-				svcPatchPtr = (void *)0xEFF822A8;
-				break;
+		case 0x02240000: // 2.36-0 5.1.0
+		case 0x02250000: // 2.37-0 6.0.0
+		case 0x02260000: // 2.38-0 6.1.0
+			createThreadPatchPtr = (void *)0xEFF8372B;
+			svcPatchPtr = (void *)0xEFF822A4;
+			return 0;
 
-			case 0x02280000: // 2.40-0 7.2.0
-				createThreadPatchPtr = (void *)0xEFF8372B;
-				svcPatchPtr = (void *)0xEFF822A4;
-				break;
+		case 0x02270400: // 2.39-4 7.0.0
+			createThreadPatchPtr = (void *)0xEFF8372F;
+			svcPatchPtr = (void *)0xEFF822A8;
+			return 0;
 
-			case 0x022C0600: // 2.44-6 8.0.0
-				createThreadPatchPtr = (void *)0xDFF83767;
-				svcPatchPtr = (void *)0xDFF82294;
-				break;
+		case 0x02280000: // 2.40-0 7.2.0
+			createThreadPatchPtr = (void *)0xEFF8372B;
+			svcPatchPtr = (void *)0xEFF822A4;
+			return 0;
 
-			case 0x022E0000: // 2.26-0 9.0.0
-				createThreadPatchPtr = (void *)0xDFF83837;
-				svcPatchPtr = (void *)0xDFF82290;
-				break;
+		case 0x022C0600: // 2.44-6 8.0.0
+			createThreadPatchPtr = (void *)0xDFF83767;
+			svcPatchPtr = (void *)0xDFF82294;
+			return 0;
 
-			default:
+		case 0x022E0000: // 2.26-0 9.0.0
+			createThreadPatchPtr = (void *)0xDFF83837;
+			svcPatchPtr = (void *)0xDFF82290;
+			return 0;
+
+		default:
 #ifdef DEBUG_PROCESS
-				printf("Unrecognized kernel version %" PRIx32 ", returning...\n",
-					ver);
+			printf("Unrecognized kernel version %" PRIx32 ", returning...\n",
+				ver);
 #endif
-				return 1;
+			return 1;
 		}
-
-#ifdef DEBUG_PROCESS
-	printf("createThread Addr: %p\nSVC Addr: %p\n",
-		createThreadPatchPtr, svcPatchPtr);
-#endif
-	return 0;
 }
 
 static inline void CleanAllDcache()
@@ -149,7 +146,8 @@ static int arm11_kernel_exploit_setup()
 
 	getPatchPtr();
 #ifdef DEBUG_PROCESS
-	printf("Loaded address %p\n", createThreadPatchPtr);
+	printf("createThread Addr: %p\nSVC Addr: %p\n",
+		createThreadPatchPtr, svcPatchPtr);
 #endif
 
 	// Part 1: corrupt kernel memory
