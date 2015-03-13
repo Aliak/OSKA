@@ -54,7 +54,7 @@ static int getPatchPtr()
 	svcPatchPtr = NULL;
 	APT_CheckNew3DS(NULL, &isN3DS);
 
-	if (isN3DS)
+	if (!isN3DS)
 		switch(ver) {
 			case 0x022C0600: // 2.44-6 8.0.0
 			case 0x022E0000: // 2.26-0 9.0.0
@@ -235,11 +235,9 @@ void doArm9Hax()
 	*(int32_t *)(0xFFF84DD4 + 4) = 0xFFFF0C80; // jump_table + 0
 	// Patch reboot start function to jump to our hook
 	*(int32_t *)(0xFFFF097C + 0) = 0xE51FF004; // ldr pc, [pc, #-4]
-	*(int32_t *)(0xFFFF097C + 4) = 0x8F028C4; // jump_table + 4
+	*(int32_t *)(0xFFFF097C + 4) = 0x1FFF4C84; // jump_table + 4
 
 	InvalidateAllIcache();
-
-	printf("test1\n");
 
 	reboot(0, 0, 2, 0);
 }

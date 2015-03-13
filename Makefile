@@ -31,9 +31,9 @@ BUILD		:=	build
 SOURCES		:=	.
 DATA		:=	data
 INCLUDES	:=	include
-APP_TITLE	:=	Bootstrap2
+APP_TITLE	:=	oska
 APP_DESCRIPTION :=	ARM11 & ARM9 Kernel Code Execution
-APP_AUTHOR	:=	aliak11
+APP_AUTHOR	:=	aliak11 & 173210
 
 #---------------------------------------------------------------------------------
 # options for code generation
