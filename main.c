@@ -6,23 +6,15 @@
 #include <dirent.h>
 #include "oska.h"
 
-void waitKey() {
-	while (aptMainLoop())
-	{
-		// Wait next screen refresh
+static void waitKey()
+{
+	while (aptMainLoop()) {
 		gspWaitForVBlank();
 
-		// Read which buttons are currently pressed 
 		hidScanInput();
-		u32 kDown = hidKeysDown();
-		u32 kHeld = hidKeysHeld();
-		
-		// If x is pressed, break loop and quit
-		if (kDown & KEY_X){
+		if (hidKeysDown() & KEY_X)
 			break;
-		}
 
-		// Flush and swap framebuffers
 		gfxFlushBuffers();
 		gfxSwapBuffers();
 	}
@@ -30,11 +22,10 @@ void waitKey() {
 
 int main()
 {
-	// Initialize services
-	srvInit();			// mandatory
-	aptInit();			// mandatory
-	hidInit(NULL);	// input (buttons, screen)
-	gfxInitDefault();			// graphics
+	srvInit();
+	aptInit();
+	hidInit(NULL);
+	gfxInitDefault();
 	fsInit();
 	sdmcInit();
 	hbInit();
@@ -53,7 +44,6 @@ int main()
 
 	printf("Exiting...\n");
 
-	// Exit services
 	hbExit();
 	sdmcExit();
 	fsExit();
@@ -61,7 +51,6 @@ int main()
 	hidExit();
 	aptExit();
 	srvExit();
-	
-	// Return to hbmenu
+
 	return 0;
 }
