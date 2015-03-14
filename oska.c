@@ -245,7 +245,7 @@ static void test()
 	buf[0] = 0xFEEFF00F;
 }
 
-static void _Noreturn __attribute__((naked)) arm11_kernel_exec()
+static void __attribute__((naked)) arm11_kernel_exec()
 {
 	const int32_t nop = 0xE320F000;
 
