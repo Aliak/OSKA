@@ -207,7 +207,7 @@ static int arm11Kxploit()
 	return 0;
 }
 
-static void doArm9Hax()
+static void arm9Exploit()
 {
 	int (* const reboot)(int, int, int, int) = (void *)0xFFF748C4;
 	const int32_t j = 0xE51FF004; // ldr pc, [pc, #4]
@@ -271,13 +271,13 @@ static void __attribute__((naked)) arm11Kexec()
 	InvalidateAllIcache();
 	CleanAllDcache();
 
-	doArm9Hax();
+	arm9Exploit();
 
 	__asm__("movs r0, #0\n"
 		 "pop {pc}\n");
 }
 
-int doKernelHax()
+int exploit()
 {
 	u32 result;
 	int i;

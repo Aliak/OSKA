@@ -1,1 +1,1 @@
-int doKernelHax();
+int exploit();
