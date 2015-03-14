@@ -35,7 +35,7 @@ int main()
 
 	svcSleepThread(1000000000);
 
-	doARM11Hax();
+	doKernelHax();
 	
 	//consoleClear();
 	printf("\nPress [X] to return to launcher\n");

