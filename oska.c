@@ -231,9 +231,6 @@ static void arm9Exploit()
 	const int32_t j = 0xE51FF004; // ldr pc, [pc, #4]
 	int32_t *src, *dst;
 
-#ifdef DEBUG_PROCESS
-	puts("Hooking Reboot Fuctions");
-#endif
 	__asm__ ("clrex");
 
 	// ARM9 code copied to FCRAM 0x23F00000
