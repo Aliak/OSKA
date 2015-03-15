@@ -31,7 +31,9 @@ hook_FFF84DD4:
 	ldr	pc, =0xFFF84DDC
 
 hook_FFFF097C:
-	ldr	pc, =0xFFFF0984
+	ldr	r0, =0xFFFF0994
+	add	r1, r0, #52
+	add	pc, r0, #-16
 
 	.global	arm11PayloadBtm
 arm11PayloadBtm:
