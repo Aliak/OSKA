@@ -12,7 +12,7 @@ static u32 nopSlide[0x1000] __attribute__((aligned(0x1000)));
 static const size_t bufSize = 0x10000;
 static int32_t *buf;
 static int32_t *createThreadPatchPtr;
-static int32_t *svcPatchPtr;
+static int32_t *svcPatchPtr = NULL;
 static int svcIsPatched = 0;
 
 // Uncomment to have progress printed w/ printf
@@ -263,7 +263,7 @@ static void __attribute__((naked)) arm11Kexec()
 	*(int32_t *)(createThreadPatchPtr+8) = 0x8DD00CE5;
 
 	// Give us access to all SVCs (including 0x7B, so we can go to kernel mode)
-	if (svcPatchPtr > 0) {
+	if (svcPatchPtr != NULL) {
 		*(int32_t *)(svcPatchPtr) = nop;
 		*(int32_t *)(svcPatchPtr + 8) = nop;
 		svcIsPatched = 1;
