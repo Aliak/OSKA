@@ -316,12 +316,10 @@ static int arm9Exploit()
 	}
 
 	// Write FW specific offsets to copied code buffer
-	/*
-	*(int32_t *)((uintptr_t)arm11Payload + 0x60) = 0xFFFD0000; // PDN regs
-	*(int32_t *)((uintptr_t)arm11Payload + 0x64) = 0xFFFD2000; // PXI regs
-	*/
-	*(int32_t *)((uintptr_t)arm11Payload + 0x68) = hook0ret;
-	*(int32_t *)((uintptr_t)arm11Payload + 0x6C) = hook1ret;
+	arm11Payload[2] = 0xFFFD0000; // PDN regs
+	arm11Payload[3] = 0xFFFD2000; // PXI regs
+	arm11Payload[4] = hook0ret;
+	arm11Payload[5] = hook1ret;
 
 	hook0[0] = ldr_pc_pc_4;
 	hook0[1] = 0xFFFF0C80; // arm11Payload

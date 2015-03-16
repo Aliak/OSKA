@@ -25,17 +25,34 @@ arm11PayloadTop:
 	b	.hook0
 	b	.hook1
 
+.pdnReg:
+	nop
+.pxiReg:
+	nop
+.hook0ret:
+	nop
+.hook1ret:
+	nop
+
 .hook0:
 	push	{ r1-r7, lr }
+
 	mov	r0, #0
 	bl	.pxiSend
+	bl	.pxiSync
+	mov	r0, #65536
+	bl	.pxiSend
+	bl	.pxiRecv
+	bl	.pxiRecv
+	bl	.pxiRecv
+
 	pop	{ r1-r7, lr }
 	ldr	r0, .hook0_r0
 	str	r0, [r1]
-	ldr	pc, arm11PayloadTop + 0x68
+	ldr	pc, .hook0ret
 
 .hook1:
-	ldr	r0, arm11PayloadTop + 0x6C
+	ldr	r0, .hook1ret
 	add	r1, r0, #68
 	add	r0, r0, #16
 	add	pc, r0, #-16
@@ -49,11 +66,24 @@ arm11PayloadTop:
 	str	r0, [r1, #8]
 	bx	lr
 
+.pxiSync:
+	ldr	r0, .pxiReg
+	ldrb	r1, [r0, #3]
+	orr	r1, r1, #64
+	strb	r1, [r0, #3]
+	bx	lr
+
+.pxiRecv:
+	ldr	r0, .pxiReg
+.pxiRecvLoop:
+	ldrh	r1, [r0, #4]
+	tst	r1, #256
+	bne	.pxiRecvLoop
+	ldr	r0, [r0, #12]
+	bx	lr
+
 .hook0_r0:
 	.word	0x44836
-
-.pxiReg:
-	.word	0xFFFCC48C
 
 	.size	arm11PayloadTop, .-arm11PayloadTop
 
