@@ -79,20 +79,10 @@ static int getPatchPtr()
 	if (ver >= 0x022C0600) {
 		APT_CheckNew3DS(NULL, &isN3DS);
 		if (isN3DS) {
-			switch(ver) {
-				case 0x022C0600: // 2.44-6 8.0.0
-				case 0x022E0000: // 2.26-0 9.0.0
-					createThreadPatchPtr = (void *)0xDFF8382F;
-					svcPatchPtr = (void *)0xDFF82260;
-					return 0;
-
-				default:
 #ifdef DEBUG_PROCESS
-					printf("Unrecognized kernel version %" PRIx32 ", returning...\n",
-						ver);
+			printf("New 3DS is not supported.\n", ver);
 #endif
-					return 1;
-			}
+			return -1;
 		}
 	}
 
@@ -136,7 +126,7 @@ static int getPatchPtr()
 
 		default:
 #ifdef DEBUG_PROCESS
-			printf("Unrecognized kernel version %" PRIx32 ", returning...\n",
+			printf("Unrecognized kernel version %" PRIx32 ".\n",
 				ver);
 #endif
 			return -1;
