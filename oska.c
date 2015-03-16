@@ -426,13 +426,14 @@ static void __attribute__((naked)) arm11Kexec()
 int exploit()
 {
 	u32 result;
-	int i;
+	u32 *p;
+	int ret;
 
 	HB_ReprotectMemory(nopSlide, 4, 7, &result);
 
-	for (i = 0; i < sizeof(nopSlide) / sizeof(int32_t); i++)
-		nopSlide[i] = nop;
-	nopSlide[i-1] = bx_lr;
+	for (p = nopSlide; p != nopSlide + sizeof(nopSlide) / sizeof(u32); p++)
+		*p = nop;
+	p[-1] = bx_lr;
 	HB_FlushInvalidateCache();
 
 #ifdef DEBUG_PROCESS
@@ -445,16 +446,17 @@ int exploit()
 	printf("Exited nop slide\n");
 #endif
 
-	if (getPatchPtr())
-		return -1;
+	ret = getPatchPtr();
+	if (ret)
+		return ret;
 #ifdef DEBUG_PROCESS
 	printf("createThread Addr: %p\nSVC Addr: %p\n",
 		createThreadPatchPtr, svcPatchPtr);
 #endif
 
-	i = arm11Kxploit();
-	if (i)
-		return i;
+	ret = arm11Kxploit();
+	if (ret)
+		return ret;
 
 #ifdef DEBUG_PROCESS
 	printf("Kernel exploit set up, \nExecuting code under ARM11 Kernel...\n");
