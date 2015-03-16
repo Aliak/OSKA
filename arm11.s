@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+@ Subroutines are allowed to overwrite only r0, r1 and r2
+
 	.arch armv6k
 	.section .rodata
 	.align 2
@@ -42,7 +44,7 @@ hook1ret:
 	nop
 
 .hook0:
-	push	{ r1-r7, lr }
+	push	{ r1, r2, lr }
 
 	mov	r0, #0
 	bl	.pxiSend
@@ -53,7 +55,7 @@ hook1ret:
 	bl	.pxiRecv
 	bl	.pxiRecv
 
-	pop	{ r1-r7, lr }
+	pop	{ r1, r2, lr }
 	ldr	r0, .hook0_r0
 	str	r0, [r1]
 	ldr	pc, hook0ret
