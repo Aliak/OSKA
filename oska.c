@@ -76,6 +76,163 @@ static int gshaxCopy(void *dst, void *src, unsigned int len)
 
 static int getPatchPtr()
 {
+	typedef struct {
+		int32_t ver;
+
+		int32_t *createThreadPatchPtr;
+		int32_t *svcPatchPtr;
+
+		int (* reboot)(int, int, int, int);
+		void *sharedPtr;
+		int32_t *arm11Payload;
+		int32_t *hook0;
+		int32_t *hook1;
+
+		void *pdnReg;
+		void *pxiReg;
+		void *hook0ret;
+	} verptr_t;
+
+	static const verptr_t ctr[] = {
+		{
+			.ver = 0x02220000,
+
+			.createThreadPatchPtr = (void *)0xEFF83C97,
+			.svcPatchPtr = (void *)0xEFF827CC,
+
+			.reboot = (void *)0xFFF748C4,
+			.sharedPtr = (void *)0xF0000000,
+			.arm11Payload = (void *)0xEFFF4C80,
+			.hook0 = (void *)0xEFFE4DD4,
+			.hook1 = (void *)0xEFFF497C,
+
+			.pdnReg = (void *)0xFFFD0000,
+			.pxiReg = (void *)0xFFFD2000,
+			.hook0ret = (void *)0xFFF84DDC
+		}, {
+			.ver = 0x02230600, // 2.35-6 5.0.0
+
+			.createThreadPatchPtr = (void *)0xEFF8372F,
+			.svcPatchPtr = (void *)0xEFF822A8,
+
+			.reboot = (void *)0xFFF64B94,
+			.sharedPtr = (void *)0xF0000000,
+			.arm11Payload = (void *)0xEFFF4C80,
+			.hook0 = (void *)0xEFFE55BC,
+			.hook1 = (void *)0xEFFF4978,
+
+			.pdnReg = (void *)0xFFFD0000,
+			.pxiReg = (void *)0xFFFD2000,
+			.hook0ret = (void *)0xFFF765C4,
+		}, {
+			.ver = 0x02240000, // 2.36-0 5.1.0
+
+			.createThreadPatchPtr = (void *)0xEFF8372B,
+			.svcPatchPtr = (void *)0xEFF822A4,
+
+			.reboot = (void *)0xFFF64B90,
+			.sharedPtr = (void *)0xF0000000,
+			.arm11Payload = (void *)0xEFFF4C80,
+			.hook0 = (void *)0xEFFE55B8,
+			.hook1 = (void *)0xEFFF4978,
+
+			.pdnReg = (void *)0xFFFD0000,
+			.pxiReg = (void *)0xFFFD2000,
+			.hook0ret = (void *)0xFFF765C0
+		}, {
+			.ver = 0x02250000, // 2.37-0 6.0.0
+
+			.createThreadPatchPtr = (void *)0xEFF8372B,
+			.svcPatchPtr = (void *)0xEFF822A4,
+
+			.reboot = (void *)0xFFF64A78,
+			.sharedPtr = (void *)0xF0000000,
+			.arm11Payload = (void *)0xEFFF4C80,
+			.hook0 = (void *)0xEFFE5AE8,
+			.hook1 = (void *)0xEFFF4978,
+
+			.pdnReg = (void *)0xFFFD0000,
+			.pxiReg = (void *)0xFFFD2000,
+			.hook0ret = (void *)0xFFF76AF0
+		}, {
+			.ver = 0x02260000, // 2.38-0 6.1.0
+
+			.createThreadPatchPtr = (void *)0xEFF8372B,
+			.svcPatchPtr = (void *)0xEFF822A4,
+
+			.reboot = (void *)0xFFF64A78,
+			.sharedPtr = (void *)0xF0000000,
+			.arm11Payload = (void *)0xEFFF4C80,
+			.hook0 = (void *)0xEFFE5AE8,
+			.hook1 = (void *)0xEFFF4978,
+
+			.pdnReg = (void *)0xFFFD0000,
+			.pxiReg = (void *)0xFFFD2000,
+			.hook0ret = (void *)0xFFF76AF0
+		}, {
+			.ver = 0x02270400, // 2.39-4 7.0.0
+			.createThreadPatchPtr = (void *)0xEFF8372F,
+			.svcPatchPtr = (void *)0xEFF822A8,
+
+			.reboot = (void *)0xFFF64AB0,
+			.sharedPtr = (void *)0xF0000000,
+			.arm11Payload = (void *)0xEFFF4C80,
+			.hook0 = (void *)0xEFFE5B34,
+			.hook1 = (void *)0xEFFF4978,
+
+			.pdnReg = (void *)0xFFFD0000,
+			.pxiReg = (void *)0xFFFD2000,
+			.hook0ret = (void *)0xFFF76B3C
+		}, {
+			.ver = 0x02280000, // 2.40-0 7.2.0
+
+			.createThreadPatchPtr = (void *)0xEFF8372B,
+			.svcPatchPtr = (void *)0xEFF822A4,
+
+			.reboot = (void *)0xFFF64AAC,
+			.sharedPtr = (void *)0xE0000000,
+			.arm11Payload = (void *)0xDFFF4C80,
+			.hook0 = (void *)0xEFFE5B30,
+			.hook1 = (void *)0xEFFF4978,
+
+			.pdnReg = (void *)0xFFFD0000,
+			.pxiReg = (void *)0xFFFD2000,
+			.hook0ret = (void *)0xFFF76B38
+
+		}, {
+			.ver = 0x022C0600, // 2.44-6 8.0.0
+
+			.createThreadPatchPtr = (void *)0xDFF83767,
+			.svcPatchPtr = (void *)0xDFF82294,
+
+			.reboot = (void *)0xFFF54BAC,
+			.sharedPtr = (void *)0xE0000000,
+			.arm11Payload = (void *)0xDFFF4C80,
+			.hook0 = (void *)0xDFFE4F28,
+			.hook1 = (void *)0xDFFF4974,
+
+			.pdnReg = (void *)0xFFFBE000,
+			.pxiReg = (void *)0xFFFC0000,
+			.hook0ret = (void *)0xFFF66F30
+		}, {
+			.ver = 0x022E0000, // 2.26-0 9.0.0
+
+			.createThreadPatchPtr = (void *)0xDFF83837,
+			.svcPatchPtr = (void *)0xDFF82290,
+
+			.reboot = (void *)0xFFF151C0,
+			.sharedPtr = (void *)0xE0000000,
+			.arm11Payload = (void *)0xDFFF4C80,
+			.hook0 = (void *)0xDFFE59D0,
+			.hook1 = (void *)0xDFFF4974,
+
+			.pdnReg = (void *)0xFFFC2000,
+			.pxiReg = (void *)0xFFFC4000,
+			.hook0ret = (void *)0xFFF279D8
+		}
+	};
+
+	const verptr_t *p;
 	int32_t ver;
 	u8 isN3DS;
 
@@ -94,143 +251,29 @@ static int getPatchPtr()
 		}
 	}
 
-	switch (ver) {
-		case 0x02220000: // 2.34-0 4.1.0
-			createThreadPatchPtr = (void *)0xEFF83C97;
-			svcPatchPtr = (void *)0xEFF827CC;
+	for (p = ctr; p != ctr + sizeof(ctr) / sizeof(verptr_t); p++)
+		if (p->ver == ver) {
+			createThreadPatchPtr = p->createThreadPatchPtr;
+			svcPatchPtr = p->svcPatchPtr;
 
-			reboot = (void *)0xFFF748C4;
-			sharedPtr = (void *)0xF0000000;
-			arm11Payload = (void *)0xEFFF4C80;
-			hook0 = (void *)0xEFFE4DD4;
-			hook1 = (void *)0xEFFF497C;
+			reboot = p->reboot;
+			sharedPtr = p->sharedPtr;
+			arm11Payload = p->arm11Payload;
+			hook0 = p->hook0;
+			hook1 = p->hook1;
 
-			pdnReg = (void *)0xFFFD0000;
-			pxiReg = (void *)0xFFFD2000;
-			hook0ret = (void *)0xFFF84DDC;
-
-			return 0;
-
-		case 0x02230600: // 2.35-6 5.0.0
-			createThreadPatchPtr = (void *)0xEFF8372F;
-			svcPatchPtr = (void *)0xEFF822A8;
-
-			reboot = (void *)0xFFF64B94;
-			sharedPtr = (void *)0xF0000000;
-			arm11Payload = (void *)0xEFFF4C80;
-			hook0 = (void *)0xEFFE55BC;
-			hook1 = (void *)0xEFFF4978;
-
-			pdnReg = (void *)0xFFFD0000;
-			pxiReg = (void *)0xFFFD2000;
-			hook0ret = (void *)0xFFF765C4;
+			pdnReg = p->pdnReg;
+			pxiReg = p->pxiReg;
+			hook0ret = p->hook0ret;
 
 			return 0;
-
-		case 0x02240000: // 2.36-0 5.1.0
-			createThreadPatchPtr = (void *)0xEFF8372B;
-			svcPatchPtr = (void *)0xEFF822A4;
-
-			reboot = (void *)0xFFF64B90;
-			sharedPtr = (void *)0xF0000000;
-			arm11Payload = (void *)0xEFFF4C80;
-			hook0 = (void *)0xEFFE55B8;
-			hook1 = (void *)0xEFFF4978;
-
-			pdnReg = (void *)0xFFFD0000;
-			pxiReg = (void *)0xFFFD2000;
-			hook0ret = (void *)0xFFF765C0;
-
-			return 0;
-
-		case 0x02250000: // 2.37-0 6.0.0
-		case 0x02260000: // 2.38-0 6.1.0
-			createThreadPatchPtr = (void *)0xEFF8372B;
-			svcPatchPtr = (void *)0xEFF822A4;
-
-			reboot = (void *)0xFFF64A78;
-			sharedPtr = (void *)0xF0000000;
-			arm11Payload = (void *)0xEFFF4C80;
-			hook0 = (void *)0xEFFE5AE8;
-			hook1 = (void *)0xEFFF4978;
-
-			pdnReg = (void *)0xFFFD0000;
-			pxiReg = (void *)0xFFFD2000;
-			hook0ret = (void *)0xFFF76AF0;
-
-			return 0;
-
-		case 0x02270400: // 2.39-4 7.0.0
-			createThreadPatchPtr = (void *)0xEFF8372F;
-			svcPatchPtr = (void *)0xEFF822A8;
-
-			reboot = (void *)0xFFF64AB0;
-			sharedPtr = (void *)0xF0000000;
-			arm11Payload = (void *)0xEFFF4C80;
-			hook0 = (void *)0xEFFE5B34;
-			hook1 = (void *)0xEFFF4978;
-
-			pdnReg = (void *)0xFFFD0000;
-			pxiReg = (void *)0xFFFD2000;
-			hook0ret = (void *)0xFFF76B3C;
-
-			return 0;
-
-		case 0x02280000: // 2.40-0 7.2.0
-			createThreadPatchPtr = (void *)0xEFF8372B;
-			svcPatchPtr = (void *)0xEFF822A4;
-
-			reboot = (void *)0xFFF64AAC;
-			sharedPtr = (void *)0xE0000000;
-			arm11Payload = (void *)0xDFFF4C80;
-			hook0 = (void *)0xEFFE5B30;
-			hook1 = (void *)0xEFFF4978;
-
-			pdnReg = (void *)0xFFFD0000;
-			pxiReg = (void *)0xFFFD2000;
-			hook0ret = (void *)0xFFF76B38;
-
-			return 0;
-
-		case 0x022C0600: // 2.44-6 8.0.0
-			createThreadPatchPtr = (void *)0xDFF83767;
-			svcPatchPtr = (void *)0xDFF82294;
-
-			reboot = (void *)0xFFF54BAC;
-			sharedPtr = (void *)0xE0000000;
-			arm11Payload = (void *)0xDFFF4C80;
-			hook0 = (void *)0xDFFE4F28;
-			hook1 = (void *)0xDFFF4974;
-
-			pdnReg = (void *)0xFFFBE000;
-			pxiReg = (void *)0xFFFC0000;
-			hook0ret = (void *)0xFFF66F30;
-
-			return 0;
-
-		case 0x022E0000: // 2.26-0 9.0.0
-			createThreadPatchPtr = (void *)0xDFF83837;
-			svcPatchPtr = (void *)0xDFF82290;
-
-			reboot = (void *)0xFFF151C0;
-			sharedPtr = (void *)0xE0000000;
-			arm11Payload = (void *)0xDFFF4C80;
-			hook0 = (void *)0xDFFE59D0;
-			hook1 = (void *)0xDFFF4974;
-
-			pdnReg = (void *)0xFFFC2000;
-			pxiReg = (void *)0xFFFC4000;
-			hook0ret = (void *)0xFFF279D8;
-
-			return 0;
-
-		default:
-#ifdef DEBUG_PROCESS
-			printf("Unrecognized kernel version %" PRIx32 ".\n",
-				ver);
-#endif
-			return -1;
 		}
+
+#ifdef DEBUG_PROCESS
+	printf("Unrecognized kernel version %" PRIx32 ".\n",
+		ver);
+#endif
+	return -1;
 }
 
 static int arm11Kxploit()
