@@ -105,9 +105,9 @@ static int getPatchPtr()
 			hook0 = (void *)0xEFFE4DD4;
 			hook1 = (void *)0xEFFF497C;
 
-			pdnReg = 0xFFFD0000;
-			pxiReg = 0xFFFD2000;
-			hook0ret = 0xFFF84DDC;
+			pdnReg = (void *)0xFFFD0000;
+			pxiReg = (void *)0xFFFD2000;
+			hook0ret = (void *)0xFFF84DDC;
 
 			return 0;
 
@@ -121,9 +121,9 @@ static int getPatchPtr()
 			hook0 = (void *)0xEFFE55BC;
 			hook1 = (void *)0xEFFF4978;
 
-			pdnReg = 0xFFFD0000;
-			pxiReg = 0xFFFD2000;
-			hook0ret = 0xFFF765C4;
+			pdnReg = (void *)0xFFFD0000;
+			pxiReg = (void *)0xFFFD2000;
+			hook0ret = (void *)0xFFF765C4;
 
 			return 0;
 
@@ -137,9 +137,9 @@ static int getPatchPtr()
 			hook0 = (void *)0xEFFE55B8;
 			hook1 = (void *)0xEFFF4978;
 
-			pdnReg = 0xFFFD0000;
-			pxiReg = 0xFFFD2000;
-			hook0ret = 0xFFF765C0;
+			pdnReg = (void *)0xFFFD0000;
+			pxiReg = (void *)0xFFFD2000;
+			hook0ret = (void *)0xFFF765C0;
 
 			return 0;
 
@@ -154,9 +154,9 @@ static int getPatchPtr()
 			hook0 = (void *)0xEFFE5AE8;
 			hook1 = (void *)0xEFFF4978;
 
-			pdnReg = 0xFFFD0000;
-			pxiReg = 0xFFFD2000;
-			hook0ret = 0xFFF76AF0;
+			pdnReg = (void *)0xFFFD0000;
+			pxiReg = (void *)0xFFFD2000;
+			hook0ret = (void *)0xFFF76AF0;
 
 			return 0;
 
@@ -170,9 +170,9 @@ static int getPatchPtr()
 			hook0 = (void *)0xEFFE5B34;
 			hook1 = (void *)0xEFFF4978;
 
-			pdnReg = 0xFFFD0000;
-			pxiReg = 0xFFFD2000;
-			hook0ret = 0xFFF76B3C;
+			pdnReg = (void *)0xFFFD0000;
+			pxiReg = (void *)0xFFFD2000;
+			hook0ret = (void *)0xFFF76B3C;
 
 			return 0;
 
@@ -186,9 +186,9 @@ static int getPatchPtr()
 			hook0 = (void *)0xEFFE5B30;
 			hook1 = (void *)0xEFFF4978;
 
-			pdnReg = 0xFFFD0000;
-			pxiReg = 0xFFFD2000;
-			hook0ret = 0xFFF76B38;
+			pdnReg = (void *)0xFFFD0000;
+			pxiReg = (void *)0xFFFD2000;
+			hook0ret = (void *)0xFFF76B38;
 
 			return 0;
 
@@ -202,9 +202,9 @@ static int getPatchPtr()
 			hook0 = (void *)0xDFFE4F28;
 			hook1 = (void *)0xDFFF4974;
 
-			pdnReg = 0xFFFBE000;
-			pxiReg = 0xFFFC0000;
-			hook0ret = 0xFFF66F30;
+			pdnReg = (void *)0xFFFBE000;
+			pxiReg = (void *)0xFFFC0000;
+			hook0ret = (void *)0xFFF66F30;
 
 			return 0;
 
@@ -218,9 +218,9 @@ static int getPatchPtr()
 			hook0 = (void *)0xDFFE59D0;
 			hook1 = (void *)0xDFFF4974;
 
-			pdnReg = 0xFFFC2000;
-			pxiReg = 0xFFFC4000;
-			hook0ret = 0xFFF279D8;
+			pdnReg = (void *)0xFFFC2000;
+			pxiReg = (void *)0xFFFC4000;
+			hook0ret = (void *)0xFFF279D8;
 
 			return 0;
 

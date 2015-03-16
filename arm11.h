@@ -19,6 +19,6 @@
 extern int32_t arm11PayloadTop[];
 extern int32_t arm11PayloadBtm[];
 
-extern int32_t pdnReg;
-extern int32_t pxiReg;
-extern int32_t hook0ret;
+extern void *pdnReg;
+extern void *pxiReg;
+extern void *hook0ret;
