@@ -37,6 +37,7 @@ static u32 nopSlide[0x1000] __attribute__((aligned(0x1000)));
 static int32_t *createThreadPatchPtr = NULL;
 static int32_t *svcPatchPtr = NULL;
 
+static int (* reboot)(int, int, int, int) = NULL;
 static void *sharedPtr = NULL;
 static int32_t *arm11Payload = NULL;
 static int32_t *hook0 = NULL;
@@ -98,6 +99,7 @@ static int getPatchPtr()
 			createThreadPatchPtr = (void *)0xEFF83C97;
 			svcPatchPtr = (void *)0xEFF827CC;
 
+			reboot = (void *)0xFFF748C4;
 			sharedPtr = (void *)0xF0000000;
 			arm11Payload = (void *)0xEFFF4C80;
 			hook0 = (void *)0xEFFE4DD4;
@@ -113,6 +115,7 @@ static int getPatchPtr()
 			createThreadPatchPtr = (void *)0xEFF8372F;
 			svcPatchPtr = (void *)0xEFF822A8;
 
+			reboot = (void *)0xFFF64B94;
 			sharedPtr = (void *)0xF0000000;
 			arm11Payload = (void *)0xEFFF4C80;
 			hook0 = (void *)0xEFFE55BC;
@@ -128,6 +131,7 @@ static int getPatchPtr()
 			createThreadPatchPtr = (void *)0xEFF8372B;
 			svcPatchPtr = (void *)0xEFF822A4;
 
+			reboot = (void *)0xFFF64B90;
 			sharedPtr = (void *)0xF0000000;
 			arm11Payload = (void *)0xEFFF4C80;
 			hook0 = (void *)0xEFFE55B8;
@@ -144,6 +148,7 @@ static int getPatchPtr()
 			createThreadPatchPtr = (void *)0xEFF8372B;
 			svcPatchPtr = (void *)0xEFF822A4;
 
+			reboot = (void *)0xFFF64A78;
 			sharedPtr = (void *)0xF0000000;
 			arm11Payload = (void *)0xEFFF4C80;
 			hook0 = (void *)0xEFFE5AE8;
@@ -159,6 +164,7 @@ static int getPatchPtr()
 			createThreadPatchPtr = (void *)0xEFF8372F;
 			svcPatchPtr = (void *)0xEFF822A8;
 
+			reboot = (void *)0xFFF64AB0;
 			sharedPtr = (void *)0xF0000000;
 			arm11Payload = (void *)0xEFFF4C80;
 			hook0 = (void *)0xEFFE5B34;
@@ -174,6 +180,7 @@ static int getPatchPtr()
 			createThreadPatchPtr = (void *)0xEFF8372B;
 			svcPatchPtr = (void *)0xEFF822A4;
 
+			reboot = (void *)0xFFF64AAC;
 			sharedPtr = (void *)0xE0000000;
 			arm11Payload = (void *)0xDFFF4C80;
 			hook0 = (void *)0xEFFE5B30;
@@ -189,6 +196,7 @@ static int getPatchPtr()
 			createThreadPatchPtr = (void *)0xDFF83767;
 			svcPatchPtr = (void *)0xDFF82294;
 
+			reboot = (void *)0xFFF54BAC;
 			sharedPtr = (void *)0xE0000000;
 			arm11Payload = (void *)0xDFFF4C80;
 			hook0 = (void *)0xDFFE4F28;
@@ -204,6 +212,7 @@ static int getPatchPtr()
 			createThreadPatchPtr = (void *)0xDFF83837;
 			svcPatchPtr = (void *)0xDFF82290;
 
+			reboot = (void *)0xFFF151C0;
 			sharedPtr = (void *)0xE0000000;
 			arm11Payload = (void *)0xDFFF4C80;
 			hook0 = (void *)0xDFFE59D0;
@@ -312,7 +321,6 @@ static inline void synci()
 
 static int arm9Exploit()
 {
-	int (* const reboot)(int, int, int, int) = (void *)0xFFF748C4;
 	int32_t *src, *dst;
 
 	if (reboot == NULL || arm11Payload == NULL || hook0 == NULL
