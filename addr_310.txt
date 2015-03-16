@@ -12,8 +12,8 @@
  8f02900:	fff748c4 ;
  8f02904:	efff497c ; Hook
  8f02908:	1fff4c84 ; Return address from hook
- 8f0290c:	fffd0000 ;
- 8f02910:	fffd2000 ;
+ 8f0290c:	fffd0000 ; PDN Registers
+ 8f02910:	fffd2000 ; PXI Registers
  8f02914:	fffd4000 ;
  8f02918:	fffce000 ;
 
@@ -31,8 +31,8 @@
  8f02944:	fff64b94 ;
  8f02948:	efff4978 ; Hook
  8f0294c:	1fff4c84 ; Return address from hook
- 8f02950:	fffd0000 ;
- 8f02954:	fffd2000 ;
+ 8f02950:	fffd0000 ; PDN Registers
+ 8f02954:	fffd2000 ; PXI Registers
  8f02958:	fffd4000 ;
  8f0295c:	fffce000 ;
 
@@ -50,8 +50,8 @@
  8f02988:	fff64b90 ;
  8f0298c:	efff4978 ; Hook
  8f02990:	1fff4c84 ; Return address from hook
- 8f02994:	fffd0000 ;
- 8f02998:	fffd2000 ;
+ 8f02994:	fffd0000 ; PDN Registers
+ 8f02998:	fffd2000 ; PXI Registers
  8f0299c:	fffd4000 ;
  8f029a0:	fffce000 ;
 
@@ -69,8 +69,8 @@
  8f029cc:	fff64a78 ;
  8f029d0:	efff4978 ; Hook
  8f029d4:	1fff4c84 ; Return address from hook
- 8f029d8:	fffd0000 ;
- 8f029dc:	fffd2000 ;
+ 8f029d8:	fffd0000 ; PDN Registers
+ 8f029dc:	fffd2000 ; PXI Registers
  8f029e0:	fffd4000 ;
  8f029e4:	fffce000 ;
 
@@ -88,8 +88,8 @@
  8f02a10:	fff64a78 ;
  8f02a14:	efff4978 ; Hook
  8f02a18:	1fff4c84 ; Return address from hook
- 8f02a1c:	fffd0000 ;
- 8f02a20:	fffd2000 ;
+ 8f02a1c:	fffd0000 ; PDN Registers
+ 8f02a20:	fffd2000 ; PXI Registers
  8f02a24:	fffd4000 ;
  8f02a28:	fffce000 ;
 
@@ -107,8 +107,8 @@
  8f02a54:	fff64ab0 ;
  8f02a58:	efff4978 ; Hook
  8f02a5c:	1fff4c84 ; Return address from hook
- 8f02a60:	fffd0000 ;
- 8f02a64:	fffd2000 ;
+ 8f02a60:	fffd0000 ; PDN Registers
+ 8f02a64:	fffd2000 ; PXI Registers
  8f02a68:	fffd4000 ;
  8f02a6c:	fffce000 ;
  
@@ -126,8 +126,8 @@
  8f02a98:	fff64aac ;
  8f02a9c:	efff4978 ; Hook
  8f02aa0:	1fff4c84 ; Return address from hook
- 8f02aa4:	fffd0000 ;
- 8f02aa8:	fffd2000 ;
+ 8f02aa4:	fffd0000 ; PDN Registers
+ 8f02aa8:	fffd2000 ; PXI Registers
  8f02aac:	fffd4000 ;
  8f02ab0:	fffce000 ;
 
@@ -145,8 +145,8 @@
  8f02adc:	fff54bac ;
  8f02ae0:	dfff4974 ; Hook
  8f02ae4:	1fff4c84 ; Return address from hook
- 8f02ae8:	fffbe000 ;
- 8f02aec:	fffc0000 ;
+ 8f02ae8:	fffbe000 ; PDN Registers
+ 8f02aec:	fffc0000 ; PXI Registers
  8f02af0:	fffc2000 ;
  8f02af4:	fffbc000 ;
 
@@ -164,7 +164,7 @@
  8f02b20:	fff151c0 ;
  8f02b24:	dfff4974 ; Hook
  8f02b28:	1fff4c84 ; Return address from hook
- 8f02b2c:	fffc2000 ;
- 8f02b30:	fffc4000 ;
+ 8f02b2c:	fffc2000 ; PDN Registers
+ 8f02b30:	fffc4000 ; PXI Registers
  8f02b34:	fffc6000 ;
  8f02b38:	fffc0000 ;

@@ -40,8 +40,6 @@ static void *sharedPtr = NULL;
 static int32_t *arm11Payload = NULL;
 static int32_t *hook0 = NULL;
 static int32_t *hook1 = NULL;
-static int32_t hook0ret;
-static int32_t hook1ret;
 
 static int svcIsPatched = 0;
 
@@ -314,12 +312,6 @@ static int arm9Exploit()
 		*dst = *src;
 		dst++;
 	}
-
-	// Write FW specific offsets to copied code buffer
-	arm11Payload[2] = 0xFFFD0000; // PDN regs
-	arm11Payload[3] = 0xFFFD2000; // PXI regs
-	arm11Payload[4] = hook0ret;
-	arm11Payload[5] = hook1ret;
 
 	hook0[0] = ldr_pc_pc_4;
 	hook0[1] = 0xFFFF0C80; // arm11Payload
