@@ -29,7 +29,6 @@ include $(DEVKITARM)/3ds_rules
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	.
-DATA		:=	data
 INCLUDES	:=	include
 APP_TITLE	:=	oska
 APP_DESCRIPTION :=	ARM11 & ARM9 Kernel Code Execution
@@ -78,7 +77,7 @@ export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
-BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
+BINFILES	:=	arm9payload.bin
 
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
@@ -155,6 +154,17 @@ $(OUTPUT).elf	:	$(OFILES)
 #---------------------------------------------------------------------------------
 	@echo $(notdir $<)
 	@$(bin2o)
+
+arm9payload.bin: arm9payload.elf
+	arm-none-eabi-objcopy -O binary $< -S $@
+
+arm9payload.elf: arm9.o
+	@echo linking $(notdir $@)
+	@$(LD) -nostdlib -T../arm9.ld $^ $(LIBPATHS) $(LIBS) -o $@
+	@$(NM) -CSn $@ > $(notdir $*.lst)
+
+arm9.o: arm9.s
+	$(AS) -g -mcpu=mpcore -march=armv5te -mcpu=arm946e-s -mlittle-endian $< -o $@
 
 # WARNING: This is not the right way to do this! TODO: Do it right!
 #---------------------------------------------------------------------------------

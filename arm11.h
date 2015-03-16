@@ -22,4 +22,3 @@ extern int32_t arm11PayloadBtm[];
 extern int32_t pdnReg;
 extern int32_t pxiReg;
 extern int32_t hook0ret;
-extern int32_t hook1ret;

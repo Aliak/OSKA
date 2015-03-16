@@ -39,10 +39,6 @@ pxiReg:
 hook0ret:
 	nop
 
-	.global	hook1ret
-hook1ret:
-	nop
-
 .hook0:
 	push	{ r1, r2, lr }
 
@@ -66,15 +62,77 @@ hook1ret:
 	bl	.delay
 
 	pop	{ r1, r2, lr }
-	ldr	r0, .hook0_r0
+	ldr	r0, .payloadPxiCmd
 	str	r0, [r1]
 	ldr	pc, hook0ret
 
 .hook1:
-	ldr	r0, hook1ret
-	add	r1, r0, #68
-	add	r0, r0, #16
-	add	pc, r0, #-16
+	adr	r0, .payloadTop
+	adr	r1, .payloadBtm
+	ldr	r2, .payloadDst
+	mov	r4, r2
+	bl	.memcpy64
+	bx	r4
+
+.memcpy64:
+	sub	r3, r1, r0
+	asr	r1, r3, #2
+	cmp	r1, #0
+	bxle	lr
+	lsls	r1, r3, #29
+	sub	r0, r0, #4
+	sub	r1, r2, #4
+	bpl	.memcpy64r1gez
+	ldr	r2, [r0, #4]!
+	str	r2, [r1, #4]!
+.memcpy64r1gez:
+	asrs	r2, r3, #3
+	bxeq	lr
+.memcpy64loop:
+	ldr	r3, [r0, #4]
+	subs	r2, r2, #1
+	str	r3, [r1, #4]
+	ldr	r3, [r0, #8]!
+	str	r3, [r1, #8]!
+	bne	.memcpy64loop
+	bx	lr
+
+.payloadTop:
+	mvn	r0, #0xE0000007
+	mov	r1, #0
+	str	r1, [r0]
+	ldr	r1, .payloadRegPxiSend
+	ldr	r2, .payloadPxiCmd
+	str	r2, [r1]
+	ldr	r8, .payloadRegShared
+	ldr	sl, .payloadArm9Ptr
+	ldr	r9, .payloadArm9Payload
+	mrs	r0, CPSR
+	orr	r0, r0, #0x1C0
+	msr	CPSR_xc, r0
+.payloadPdnLoop:
+	ldrb	r0, [r8]
+	ands	r0, r0, #1
+	bne	.payloadPdnLoop
+	str	r9, [sl]
+	mvn	r0, #0xE0000007
+.payloadLoop:
+	ldr	r1, [r0]
+	cmp	r1, #0
+	beq	.payloadLoop
+	bx	r1
+
+.payloadRegPxiSend:
+	.word	0x10163008
+.payloadPxiCmd:
+	.word	0x44836
+.payloadRegShared:
+	.word	0x10141000
+.payloadArm9Ptr:
+	.word	0x2400000C
+.payloadArm9Payload:
+	.word	0x23F00000
+.payloadBtm:
 
 .delay:
 	subs	r0, r0, #2
@@ -107,8 +165,8 @@ hook1ret:
 	ldr	r0, [r0, #12]
 	bx	lr
 
-.hook0_r0:
-	.word	0x44836
+.payloadDst:
+	.word	0x1FFFFC00
 
 	.size	arm11PayloadTop, .-arm11PayloadTop
 

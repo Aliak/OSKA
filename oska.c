@@ -25,6 +25,7 @@
 #include <malloc.h>
 #include <dirent.h>
 #include <errno.h>
+#include "arm9payload.h"
 #include "arm11.h"
 
 static const int32_t bx_lr = 0xE12FFF1E; // bx lr
@@ -105,7 +106,6 @@ static int getPatchPtr()
 			pdnReg = 0xFFFD0000;
 			pxiReg = 0xFFFD2000;
 			hook0ret = 0xFFF84DDC;
-			hook1ret = 0x1FFF4C84;
 
 			return 0;
 
@@ -121,7 +121,6 @@ static int getPatchPtr()
 			pdnReg = 0xFFFD0000;
 			pxiReg = 0xFFFD2000;
 			hook0ret = 0xFFF765C4;
-			hook1ret = 0x1FFF4C84;
 
 			return 0;
 
@@ -137,7 +136,6 @@ static int getPatchPtr()
 			pdnReg = 0xFFFD0000;
 			pxiReg = 0xFFFD2000;
 			hook0ret = 0xFFF765C0;
-			hook1ret = 0x1FFF4C84;
 
 			return 0;
 
@@ -154,7 +152,6 @@ static int getPatchPtr()
 			pdnReg = 0xFFFD0000;
 			pxiReg = 0xFFFD2000;
 			hook0ret = 0xFFF76AF0;
-			hook1ret = 0x1FFF4C84;
 
 			return 0;
 
@@ -170,7 +167,6 @@ static int getPatchPtr()
 			pdnReg = 0xFFFD0000;
 			pxiReg = 0xFFFD2000;
 			hook0ret = 0xFFF76B3C;
-			hook1ret = 0x1FFF4C84;
 
 			return 0;
 
@@ -186,7 +182,6 @@ static int getPatchPtr()
 			pdnReg = 0xFFFD0000;
 			pxiReg = 0xFFFD2000;
 			hook0ret = 0xFFF76B38;
-			hook1ret = 0x1FFF4C84;
 
 			return 0;
 
@@ -202,7 +197,6 @@ static int getPatchPtr()
 			pdnReg = 0xFFFBE000;
 			pxiReg = 0xFFFC0000;
 			hook0ret = 0xFFF66F30;
-			hook1ret = 0x1FFF4C84;
 
 			return 0;
 
@@ -218,7 +212,6 @@ static int getPatchPtr()
 			pdnReg = 0xFFFC2000;
 			pxiReg = 0xFFFC4000;
 			hook0ret = 0xFFF279D8;
-			hook1ret = 0x1FFF4C84;
 
 			return 0;
 
@@ -329,7 +322,8 @@ static int arm9Exploit()
 		return -EFAULT;
 
 	// ARM9 code copied to FCRAM 0x23F00000
-	//memcpy((void *)((uintptr_t)sharedPtr + 0xF3F00000), ARM9_PAYLOAD, ARM9_PAYLOAD_LEN);
+	memcpy((void *)((uintptr_t)sharedPtr + 0x3F00000),
+		arm9payload_bin, arm9payload_bin_size);
 	// Write function hooks
 	dst = arm11Payload;
 	for (src = arm11PayloadTop; src != arm11PayloadBtm; src++) {
