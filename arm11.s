@@ -22,21 +22,24 @@
 
 	.global	arm11PayloadTop
 arm11PayloadTop:
-	b	hook0
-	b	hook1
+	b	.hook0
+	b	.hook1
 
-hook0:
-	ldr	r0, =0x44836
+.hook0:
+	ldr	r0, .hook0_r0
 	str	r0, [r1]
-hook0ret:
-	ldr	pc, [pc, #arm11PayloadTop - hook0ret + 0x68]
+	ldr	pc, arm11PayloadTop + 0x68
 
-hook1:
-hook1ret:
-	ldr	r0, [pc, #arm11PayloadTop - hook1ret + 0x6C]
+.hook1:
+	ldr	r0, arm11PayloadTop + 0x6C
 	add	r1, r0, #68
 	add	r0, r0, #16
 	add	pc, r0, #-16
+
+.hook0_r0:
+	.word	0x44836
+
+	.size	arm11PayloadTop, .-arm11PayloadTop
 
 	.global	arm11PayloadBtm
 arm11PayloadBtm:
