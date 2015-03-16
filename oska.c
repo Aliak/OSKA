@@ -300,7 +300,7 @@ static int arm9Exploit()
 	int (* const reboot)(int, int, int, int) = (void *)0xFFF748C4;
 	int32_t *src, *dst;
 
-	__asm__ ("clrex");
+	__asm__("clrex");
 
 	if (arm11Payload == NULL || hook0 == NULL
 		|| arm11PayloadTop == NULL || arm11PayloadBtm == NULL)
