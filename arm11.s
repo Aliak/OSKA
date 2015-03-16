@@ -55,6 +55,16 @@ hook1ret:
 	bl	.pxiRecv
 	bl	.pxiRecv
 
+	ldr	r1, pdnReg
+	mov	r0, #2
+	strb	r0, [r1, #560]
+	mov	r0, #16
+	bl	.delay
+	mov	r0, #0
+	strb	r0, [r1, #560]
+	mov	r0, #16
+	bl	.delay
+
 	pop	{ r1, r2, lr }
 	ldr	r0, .hook0_r0
 	str	r0, [r1]
@@ -65,6 +75,12 @@ hook1ret:
 	add	r1, r0, #68
 	add	r0, r0, #16
 	add	pc, r0, #-16
+
+.delay:
+	subs	r0, r0, #2
+	nop
+	bgt .delay
+	bx lr
 
 .pxiSend:
 	ldr	r1, pxiReg
