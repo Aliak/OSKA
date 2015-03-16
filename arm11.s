@@ -37,7 +37,7 @@ pxiReg:
 hook0ret:
 	nop
 
-	.global hook1ret
+	.global	hook1ret
 hook1ret:
 	nop
 
