@@ -346,7 +346,8 @@ static void __attribute__((naked)) arm11Kexec()
 	__asm__("add sp, sp, #8\n");
 
 	// Fix up memory
-	createThreadPatchPtr[2] = 0x8DD00CE5;
+	if (createThreadPatchPtr != NULL)
+		createThreadPatchPtr[2] = 0x8DD00CE5;
 
 	// Give us access to all SVCs (including 0x7B, so we can go to kernel mode)
 	if (svcPatchPtr != NULL) {
