@@ -19,7 +19,7 @@
 @ Subroutines are allowed to overwrite only r0, r1 and r2
 
 	.arch armv6k
-	.section .rodata
+	.data
 	.align 2
 
 	.global	arm11PayloadTop
