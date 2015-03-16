@@ -1,0 +1,170 @@
+; 2.34-0 4.1.0
+ 8f028d8:	009d2000 ; Payload Code
+ 8f028dc:	252cd000 ;
+ 8f028e0:	feaffffe ;
+ 8f028e4:	192cd000 ;
+ 8f028e8:	eff83c97 ; createThread
+ 8f028ec:	f0000000 ; ARM9/ARM11 shared FCRAM
+ 8f028f0:	e8000000 ;
+ 8f028f4:	efff4c80 ;
+ 8f028f8:	effe4dd4 ; Hook
+ 8f028fc:	fff84ddc ; Return address from hook
+ 8f02900:	fff748c4 ;
+ 8f02904:	efff497c ; Hook
+ 8f02908:	1fff4c84 ; Return address from hook
+ 8f0290c:	fffd0000 ;
+ 8f02910:	fffd2000 ;
+ 8f02914:	fffd4000 ;
+ 8f02918:	fffce000 ;
+
+; 2.35-6 5.0.0
+ 8f0291c:	009d2000 ; Payload Code
+ 8f02920:	255ce000 ;
+ 8f02924:	feaffffe ;
+ 8f02928:	195ce000 ;
+ 8f0292c:	eff8372f ; createThread
+ 8f02930:	f0000000 ; ARM9/ARM11 shared FCRAM
+ 8f02934:	e8000000 ;
+ 8f02938:	efff4c80 ;
+ 8f0293c:	effe55bc ; Hook
+ 8f02940:	fff765c4 ; Return address from hook
+ 8f02944:	fff64b94 ;
+ 8f02948:	efff4978 ; Hook
+ 8f0294c:	1fff4c84 ; Return address from hook
+ 8f02950:	fffd0000 ;
+ 8f02954:	fffd2000 ;
+ 8f02958:	fffd4000 ;
+ 8f0295c:	fffce000 ;
+
+; 2.36-0 5.1.0
+ 8f02960:	009d2000 ; Payload Code
+ 8f02964:	255ce000 ;
+ 8f02968:	feaffffe ;
+ 8f0296c:	195ce000 ;
+ 8f02970:	eff8372b ; createThread
+ 8f02974:	f0000000 ; ARM9/ARM11 shared FCRAM
+ 8f02978:	e8000000 ;
+ 8f0297c:	efff4c80 ;
+ 8f02980:	effe55b8 ;
+ 8f02984:	fff765c0 ; Return address from hook
+ 8f02988:	fff64b90 ;
+ 8f0298c:	efff4978 ; Hook
+ 8f02990:	1fff4c84 ; Return address from hook
+ 8f02994:	fffd0000 ;
+ 8f02998:	fffd2000 ;
+ 8f0299c:	fffd4000 ;
+ 8f029a0:	fffce000 ;
+
+; 2.37-0 6.0.0
+ 8f029a4:	009d2000 ; Payload Code
+ 8f029a8:	255ce000 ;
+ 8f029ac:	feaffffe ;
+ 8f029b0:	195ce000 ;
+ 8f029b4:	eff8372b ; createThread
+ 8f029b8:	f0000000 ; ARM9/ARM11 shared FCRAM
+ 8f029bc:	e8000000 ;
+ 8f029c0:	efff4c80 ;
+ 8f029c4:	effe5ae8 ;
+ 8f029c8:	fff76af0 ; Return address from hook
+ 8f029cc:	fff64a78 ;
+ 8f029d0:	efff4978 ; Hook
+ 8f029d4:	1fff4c84 ; Return address from hook
+ 8f029d8:	fffd0000 ;
+ 8f029dc:	fffd2000 ;
+ 8f029e0:	fffd4000 ;
+ 8f029e4:	fffce000 ;
+
+; 2.37-0 6.1.0
+ 8f029e8:	009d2000 ; Payload Code
+ 8f029ec:	255ce000 ;
+ 8f029f0:	feaffffe ;
+ 8f029f4:	195ce000 ;
+ 8f029f8:	eff8372b ; createThread
+ 8f029fc:	f0000000 ; ARM9/ARM11 shared FCRAM
+ 8f02a00:	e8000000 ;
+ 8f02a04:	efff4c80 ;
+ 8f02a08:	effe5ae8 ;
+ 8f02a0c:	fff76af0 ; Return address from hook
+ 8f02a10:	fff64a78 ;
+ 8f02a14:	efff4978 ; Hook
+ 8f02a18:	1fff4c84 ; Return address from hook
+ 8f02a1c:	fffd0000 ;
+ 8f02a20:	fffd2000 ;
+ 8f02a24:	fffd4000 ;
+ 8f02a28:	fffce000 ;
+
+; 2.39-4 7.0.0
+ 8f02a2c:	009d2000 ; Payload Code
+ 8f02a30:	255ce000 ;
+ 8f02a34:	feaffffe ;
+ 8f02a38:	195ce000 ;
+ 8f02a3c:	eff8372f ; createThread
+ 8f02a40:	f0000000 ; ARM9/ARM11 shared FCRAM
+ 8f02a44:	e8000000 ;
+ 8f02a48:	efff4c80 ;
+ 8f02a4c:	effe5b34 ;
+ 8f02a50:	fff76b3c ; Return address from hook
+ 8f02a54:	fff64ab0 ;
+ 8f02a58:	efff4978 ; Hook
+ 8f02a5c:	1fff4c84 ; Return address from hook
+ 8f02a60:	fffd0000 ;
+ 8f02a64:	fffd2000 ;
+ 8f02a68:	fffd4000 ;
+ 8f02a6c:	fffce000 ;
+ 
+; 2.40-0 7.2.0
+ 8f02a70:	009d2000 ; Payload Code
+ 8f02a74:	255ce000 ;
+ 8f02a78:	feaffffe ;
+ 8f02a7c:	195ce000 ;
+ 8f02a80:	eff8372b ; createThread
+ 8f02a84:	f0000000 ; ARM9/ARM11 shared FCRAM
+ 8f02a88:	e8000000 ;
+ 8f02a8c:	efff4c80 ;
+ 8f02a90:	effe5b30 ; Hook
+ 8f02a94:	fff76b38 ; Return address from hook
+ 8f02a98:	fff64aac ;
+ 8f02a9c:	efff4978 ; Hook
+ 8f02aa0:	1fff4c84 ; Return address from hook
+ 8f02aa4:	fffd0000 ;
+ 8f02aa8:	fffd2000 ;
+ 8f02aac:	fffd4000 ;
+ 8f02ab0:	fffce000 ;
+
+; 2.44-6 8.0.0
+ 8f02ab4:	009d2000 ; Payload Code
+ 8f02ab8:	255ce000 ;
+ 8f02abc:	feaffffe ;
+ 8f02ac0:	195ce000 ;
+ 8f02ac4:	dff83767 ; createThread
+ 8f02ac8:	e0000000 ; ARM9/ARM11 shared FCRAM
+ 8f02acc:	d8000000 ;
+ 8f02ad0:	dfff4c80 ;
+ 8f02ad4:	dffe4f28 ; Hook
+ 8f02ad8:	fff66f30 ; Return address from hook
+ 8f02adc:	fff54bac ;
+ 8f02ae0:	dfff4974 ; Hook
+ 8f02ae4:	1fff4c84 ; Return address from hook
+ 8f02ae8:	fffbe000 ;
+ 8f02aec:	fffc0000 ;
+ 8f02af0:	fffc2000 ;
+ 8f02af4:	fffbc000 ;
+
+; 2.26-0 9.0.0
+ 8f02af8:	009d2000 ; Payload Code
+ 8f02afc:	255ce000 ;
+ 8f02b00:	feaffffe ;
+ 8f02b04:	195ce000 ;
+ 8f02b08:	dff83837 ; createThread
+ 8f02b0c:	e0000000 ; ARM9/ARM11 shared FCRAM
+ 8f02b10:	d8000000 ;
+ 8f02b14:	dfff4c80 ;
+ 8f02b18:	dffe59d0 ; Hook
+ 8f02b1c:	fff279d8 ; Return address from hook
+ 8f02b20:	fff151c0 ;
+ 8f02b24:	dfff4974 ; Hook
+ 8f02b28:	1fff4c84 ; Return address from hook
+ 8f02b2c:	fffc2000 ;
+ 8f02b30:	fffc4000 ;
+ 8f02b34:	fffc6000 ;
+ 8f02b38:	fffc0000 ;
