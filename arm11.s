@@ -26,6 +26,10 @@ arm11PayloadTop:
 	b	.hook1
 
 .hook0:
+	push	{ r1-r7, lr }
+	mov	r0, #0
+	bl	.sub_c0cc
+	pop	{ r1-r7, lr }
 	ldr	r0, .hook0_r0
 	str	r0, [r1]
 	ldr	pc, arm11PayloadTop + 0x68
@@ -36,8 +40,20 @@ arm11PayloadTop:
 	add	r0, r0, #16
 	add	pc, r0, #-16
 
+.sub_c0cc:
+	ldr	r1, .sub_c0cc_r1
+.loc_c0d0:
+	ldrh	r2, [r1, #4]
+	tst	r2, #2
+	bne	.loc_c0d0
+	str	r0, [r1, #8]
+	bx	lr
+
 .hook0_r0:
 	.word	0x44836
+
+.sub_c0cc_r1:
+	.word	0xFFFCC48C
 
 	.size	arm11PayloadTop, .-arm11PayloadTop
 
