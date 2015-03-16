@@ -32,9 +32,17 @@ static const int32_t nop = 0xE320F000; // nop {0}
 static const int32_t ldr_pc_pc_4 = 0xE51FF004; // ldr pc, [pc, #4]
 
 static u32 nopSlide[0x1000] __attribute__((aligned(0x1000)));
-static const size_t bufSize = 0x10000;
-static int32_t *createThreadPatchPtr;
+
+static int32_t *createThreadPatchPtr = NULL;
 static int32_t *svcPatchPtr = NULL;
+
+static void *sharedPtr = NULL;
+static int32_t *arm11Payload = NULL;
+static int32_t *hook0 = NULL;
+static int32_t *hook1 = NULL;
+static int32_t hook0ret;
+static int32_t hook1ret;
+
 static int svcIsPatched = 0;
 
 // Uncomment to have progress printed w/ printf
@@ -80,7 +88,7 @@ static int getPatchPtr()
 		APT_CheckNew3DS(NULL, &isN3DS);
 		if (isN3DS) {
 #ifdef DEBUG_PROCESS
-			printf("New 3DS is not supported.\n", ver);
+			printf("New 3DS is not supported.\n");
 #endif
 			return -1;
 		}
@@ -90,38 +98,106 @@ static int getPatchPtr()
 		case 0x02220000: // 2.34-0 4.1.0
 			createThreadPatchPtr = (void *)0xEFF83C97;
 			svcPatchPtr = (void *)0xEFF827CC;
+
+			sharedPtr = (void *)0xF0000000;
+			arm11Payload = (void *)0xEFFF4C80;
+			hook0 = (void *)0xEFFE4DD4;
+			hook1 = (void *)0xEFFF497C;
+			hook0ret = 0xFFF84DDC;
+			hook1ret = 0x1FFF4C84;
+
 			return 0;
 
 		case 0x02230600: // 2.35-6 5.0.0
 			createThreadPatchPtr = (void *)0xEFF8372F;
 			svcPatchPtr = (void *)0xEFF822A8;
+
+			sharedPtr = (void *)0xF0000000;
+			arm11Payload = (void *)0xEFFF4C80;
+			hook0 = (void *)0xEFFE55BC;
+			hook1 = (void *)0xEFFF4978;
+			hook0ret = 0xFFF765C4;
+			hook1ret = 0x1FFF4C84;
+
 			return 0;
 
 		case 0x02240000: // 2.36-0 5.1.0
+			createThreadPatchPtr = (void *)0xEFF8372B;
+			svcPatchPtr = (void *)0xEFF822A4;
+
+			sharedPtr = (void *)0xF0000000;
+			arm11Payload = (void *)0xEFFF4C80;
+			hook0 = (void *)0xEFFE55B8;
+			hook1 = (void *)0xEFFF4978;
+			hook0ret = 0xFFF765C0;
+			hook1ret = 0x1FFF4C84;
+
+			return 0;
+
 		case 0x02250000: // 2.37-0 6.0.0
 		case 0x02260000: // 2.38-0 6.1.0
 			createThreadPatchPtr = (void *)0xEFF8372B;
 			svcPatchPtr = (void *)0xEFF822A4;
+
+			sharedPtr = (void *)0xF0000000;
+			arm11Payload = (void *)0xEFFF4C80;
+			hook0 = (void *)0xEFFE5AE8;
+			hook1 = (void *)0xEFFF4978;
+			hook0ret = 0xFFF76AF0;
+			hook1ret = 0x1FFF4C84;
+
 			return 0;
 
 		case 0x02270400: // 2.39-4 7.0.0
 			createThreadPatchPtr = (void *)0xEFF8372F;
 			svcPatchPtr = (void *)0xEFF822A8;
+
+			sharedPtr = (void *)0xF0000000;
+			arm11Payload = (void *)0xEFFF4C80;
+			hook0 = (void *)0xEFFE5B34;
+			hook1 = (void *)0xEFFF4978;
+			hook0ret = 0xFFF76B3C;
+			hook1ret = 0x1FFF4C84;
+
 			return 0;
 
 		case 0x02280000: // 2.40-0 7.2.0
 			createThreadPatchPtr = (void *)0xEFF8372B;
 			svcPatchPtr = (void *)0xEFF822A4;
+
+			sharedPtr = (void *)0xE0000000;
+			arm11Payload = (void *)0xDFFF4C80;
+			hook0 = (void *)0xEFFE5B30;
+			hook1 = (void *)0xEFFF4978;
+			hook0ret = 0xFFF76B38;
+			hook1ret = 0x1FFF4C84;
+
 			return 0;
 
 		case 0x022C0600: // 2.44-6 8.0.0
 			createThreadPatchPtr = (void *)0xDFF83767;
 			svcPatchPtr = (void *)0xDFF82294;
+
+			sharedPtr = (void *)0xE0000000;
+			arm11Payload = (void *)0xDFFF4C80;
+			hook0 = (void *)0xDFFE4F28;
+			hook1 = (void *)0xDFFF4974;
+			hook0ret = 0xFFF66F30;
+			hook1ret = 0x1FFF4C84;
+
 			return 0;
 
 		case 0x022E0000: // 2.26-0 9.0.0
 			createThreadPatchPtr = (void *)0xDFF83837;
 			svcPatchPtr = (void *)0xDFF82290;
+
+			sharedPtr = (void *)0xE0000000;
+			arm11Payload = (void *)0xDFFF4C80;
+			hook0 = (void *)0xDFFE59D0;
+			hook1 = (void *)0xDFFF4974;
+			hook0ret = 0xFFF279D8;
+			hook1ret = 0x1FFF4C84;
+
 			return 0;
 
 		default:
@@ -138,8 +214,9 @@ static int arm11Kxploit()
 	const size_t allocSize = 0x2000;
 	const size_t freeOffset = 0x1000;
 	const size_t freeSize = allocSize - freeOffset;
-	void *p, *free;
+	const size_t bufSize = 0x10000;
 	int32_t *buf;
+	void *p, *free;
 	int32_t saved[8];
 	u32 i;
 
@@ -218,17 +295,21 @@ static inline void synci()
 		::: "r0");
 }
 
-static void arm9Exploit()
+static int arm9Exploit()
 {
 	int (* const reboot)(int, int, int, int) = (void *)0xFFF748C4;
 	int32_t *src, *dst;
 
 	__asm__ ("clrex");
 
+	if (arm11Payload == NULL || hook0 == NULL
+		|| arm11PayloadTop == NULL || arm11PayloadBtm == NULL)
+		return -EFAULT;
+
 	// ARM9 code copied to FCRAM 0x23F00000
-	//memcpy(0xF3F00000, ARM9_PAYLOAD, ARM9_PAYLOAD_LEN);
-	// Write function hook at 0xFFFF0C80
-	dst = (int32_t *)0xEFFF4C80;
+	//memcpy((void *)((uintptr_t)sharedPtr + 0xF3F00000), ARM9_PAYLOAD, ARM9_PAYLOAD_LEN);
+	// Write function hooks
+	dst = arm11Payload;
 	for (src = arm11PayloadTop; src != arm11PayloadBtm; src++) {
 		*dst = *src;
 		dst++;
@@ -236,20 +317,21 @@ static void arm9Exploit()
 
 	// Write FW specific offsets to copied code buffer
 	/*
-	*(int32_t *)(0xEFFF4C80 + 0x60) = 0xFFFD0000; // PDN regs
-	*(int32_t *)(0xEFFF4C80 + 0x64) = 0xFFFD2000; // PXI regs
-	*(int32_t *)(0xEFFF4C80 + 0x68) = 0xFFF84DDC; // where to return to from hook
+	*(int32_t *)((uintptr_t)arm11Payload + 0x60) = 0xFFFD0000; // PDN regs
+	*(int32_t *)((uintptr_t)arm11Payload + 0x64) = 0xFFFD2000; // PXI regs
 	*/
+	*(int32_t *)((uintptr_t)arm11Payload + 0x68) = hook0ret;
+	*(int32_t *)((uintptr_t)arm11Payload + 0x6C) = hook1ret;
 
-	*(int32_t *)0xEFFE4DD4 = ldr_pc_pc_4;
-	*(int32_t *)0xEFFE4DD8 = 0xFFFF0C80; // arm11Payload
+	hook0[0] = ldr_pc_pc_4;
+	hook0[1] = 0xFFFF0C80; // arm11Payload
 
-	*(int32_t *)0xEFFF497C = ldr_pc_pc_4;
-	*(int32_t *)0xEFFF4980 = 0x1FFF4C84; // arm11Payload + 4
+	hook1[0] = ldr_pc_pc_4;
+	hook1[1] = 0x1FFF4C84; // arm11Payload + 4
 
 	synci();
 
-	reboot(0, 0, 2, 0);
+	return reboot(0, 0, 2, 0);
 }
 
 #ifdef DEBUG_PROCESS

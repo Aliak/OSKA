@@ -22,17 +22,20 @@
 
 	.global	arm11PayloadTop
 arm11PayloadTop:
-	b	hook_FFF84DD4
-	b	hook_FFFF097C
+	b	hook0
+	b	hook1
 
-hook_FFF84DD4:
+hook0:
 	ldr	r0, =0x44836
 	str	r0, [r1]
-	ldr	pc, =0xFFF84DDC
+hook0ret:
+	ldr	pc, [pc, #arm11PayloadTop - hook0ret + 0x68]
 
-hook_FFFF097C:
-	ldr	r0, =0xFFFF0994
-	add	r1, r0, #52
+hook1:
+hook1ret:
+	ldr	r0, [pc, #arm11PayloadTop - hook1ret + 0x6C]
+	add	r1, r0, #68
+	add	r0, r0, #16
 	add	pc, r0, #-16
 
 	.global	arm11PayloadBtm
