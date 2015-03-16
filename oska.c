@@ -315,14 +315,14 @@ static int arm9Exploit()
 	int (* const reboot)(int, int, int, int) = (void *)0xFFF748C4;
 	int32_t *src, *dst;
 
-	__asm__("clrex");
-
-	if (arm11Payload == NULL || hook0 == NULL
+	if (reboot == NULL || arm11Payload == NULL || hook0 == NULL
 		|| arm11PayloadTop == NULL || arm11PayloadBtm == NULL)
 		return -EFAULT;
 
+	__asm__("clrex");
+
 	// ARM9 code copied to FCRAM 0x23F00000
-	memcpy((void *)((uintptr_t)sharedPtr + 0x3F00000),
+	memcpy((void *)((uintptr_t)sharedPtr | 0x03F00000),
 		arm9payload_bin, arm9payload_bin_size);
 	// Write function hooks
 	dst = arm11Payload;
