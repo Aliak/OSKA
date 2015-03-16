@@ -25,13 +25,20 @@ arm11PayloadTop:
 	b	.hook0
 	b	.hook1
 
-.pdnReg:
+	.global	pdnReg
+pdnReg:
 	nop
-.pxiReg:
+
+	.global	pxiReg
+pxiReg:
 	nop
-.hook0ret:
+
+	.global	hook0ret
+hook0ret:
 	nop
-.hook1ret:
+
+	.global hook1ret
+hook1ret:
 	nop
 
 .hook0:
@@ -49,16 +56,16 @@ arm11PayloadTop:
 	pop	{ r1-r7, lr }
 	ldr	r0, .hook0_r0
 	str	r0, [r1]
-	ldr	pc, .hook0ret
+	ldr	pc, hook0ret
 
 .hook1:
-	ldr	r0, .hook1ret
+	ldr	r0, hook1ret
 	add	r1, r0, #68
 	add	r0, r0, #16
 	add	pc, r0, #-16
 
 .pxiSend:
-	ldr	r1, .pxiReg
+	ldr	r1, pxiReg
 .pxiSendLoop:
 	ldrh	r2, [r1, #4]
 	tst	r2, #2
@@ -67,14 +74,14 @@ arm11PayloadTop:
 	bx	lr
 
 .pxiSync:
-	ldr	r0, .pxiReg
+	ldr	r0, pxiReg
 	ldrb	r1, [r0, #3]
 	orr	r1, r1, #64
 	strb	r1, [r0, #3]
 	bx	lr
 
 .pxiRecv:
-	ldr	r0, .pxiReg
+	ldr	r0, pxiReg
 .pxiRecvLoop:
 	ldrh	r1, [r0, #4]
 	tst	r1, #256

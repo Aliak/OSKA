@@ -101,6 +101,8 @@ static int getPatchPtr()
 			arm11Payload = (void *)0xEFFF4C80;
 			hook0 = (void *)0xEFFE4DD4;
 			hook1 = (void *)0xEFFF497C;
+
+			pxiReg = 0xFFFD2000;
 			hook0ret = 0xFFF84DDC;
 			hook1ret = 0x1FFF4C84;
 
@@ -114,6 +116,8 @@ static int getPatchPtr()
 			arm11Payload = (void *)0xEFFF4C80;
 			hook0 = (void *)0xEFFE55BC;
 			hook1 = (void *)0xEFFF4978;
+
+			pxiReg = 0xFFFD2000;
 			hook0ret = 0xFFF765C4;
 			hook1ret = 0x1FFF4C84;
 
@@ -127,6 +131,8 @@ static int getPatchPtr()
 			arm11Payload = (void *)0xEFFF4C80;
 			hook0 = (void *)0xEFFE55B8;
 			hook1 = (void *)0xEFFF4978;
+
+			pxiReg = 0xFFFD2000;
 			hook0ret = 0xFFF765C0;
 			hook1ret = 0x1FFF4C84;
 
@@ -141,6 +147,8 @@ static int getPatchPtr()
 			arm11Payload = (void *)0xEFFF4C80;
 			hook0 = (void *)0xEFFE5AE8;
 			hook1 = (void *)0xEFFF4978;
+
+			pxiReg = 0xFFFD2000;
 			hook0ret = 0xFFF76AF0;
 			hook1ret = 0x1FFF4C84;
 
@@ -154,6 +162,8 @@ static int getPatchPtr()
 			arm11Payload = (void *)0xEFFF4C80;
 			hook0 = (void *)0xEFFE5B34;
 			hook1 = (void *)0xEFFF4978;
+
+			pxiReg = 0xFFFD2000;
 			hook0ret = 0xFFF76B3C;
 			hook1ret = 0x1FFF4C84;
 
@@ -167,6 +177,8 @@ static int getPatchPtr()
 			arm11Payload = (void *)0xDFFF4C80;
 			hook0 = (void *)0xEFFE5B30;
 			hook1 = (void *)0xEFFF4978;
+
+			pxiReg = 0xFFFD2000;
 			hook0ret = 0xFFF76B38;
 			hook1ret = 0x1FFF4C84;
 
@@ -180,6 +192,8 @@ static int getPatchPtr()
 			arm11Payload = (void *)0xDFFF4C80;
 			hook0 = (void *)0xDFFE4F28;
 			hook1 = (void *)0xDFFF4974;
+
+			pxiReg = 0xFFFC0000;
 			hook0ret = 0xFFF66F30;
 			hook1ret = 0x1FFF4C84;
 
@@ -193,6 +207,8 @@ static int getPatchPtr()
 			arm11Payload = (void *)0xDFFF4C80;
 			hook0 = (void *)0xDFFE59D0;
 			hook1 = (void *)0xDFFF4974;
+
+			pxiReg = 0xFFFC4000;
 			hook0ret = 0xFFF279D8;
 			hook1ret = 0x1FFF4C84;
 
