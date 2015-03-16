@@ -79,8 +79,8 @@ hook1ret:
 .delay:
 	subs	r0, r0, #2
 	nop
-	bgt .delay
-	bx lr
+	bgt	.delay
+	bx	lr
 
 .pxiSend:
 	ldr	r1, pxiReg
