@@ -28,6 +28,9 @@
 #include "arm9payload.h"
 #include "arm11.h"
 
+// Uncomment to have progress printed w/ printf
+#define DEBUG_PROCESS
+
 static const int32_t bx_lr = 0xE12FFF1E; // bx lr
 static const int32_t nop = 0xE320F000; // nop {0}
 static const int32_t ldr_pc_pc_4 = 0xE51FF004; // ldr pc, [pc, #4]
@@ -42,11 +45,9 @@ static void *sharedPtr = NULL;
 static int32_t *arm11Payload = NULL;
 static int32_t *hook0 = NULL;
 static int32_t *hook1 = NULL;
-
+#ifdef DEBUG_PROCESS
 static int svcIsPatched = 0;
-
-// Uncomment to have progress printed w/ printf
-#define DEBUG_PROCESS
+#endif
 
 static int gshaxCopy(void *dst, void *src, unsigned int len)
 {
@@ -412,7 +413,9 @@ static void __attribute__((naked)) arm11Kexec()
 	if (svcPatchPtr != NULL) {
 		svcPatchPtr[0] = nop;
 		svcPatchPtr[2] = nop;
+#ifdef DEBUG_PROCESS
 		svcIsPatched = 1;
+#endif
 	}
 
 	synci();
@@ -474,5 +477,5 @@ int exploit()
 	}
 #endif
 
-	return !svcIsPatched;
+	return 0;
 }
