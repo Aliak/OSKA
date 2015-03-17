@@ -426,7 +426,7 @@ static void __attribute__((naked)) arm11Kexec()
 		 "pop {pc}\n");
 }
 
-int exploit()
+bool exploit()
 {
 	u32 result;
 	u32 *p;
@@ -477,5 +477,5 @@ int exploit()
 	}
 #endif
 
-	return 0;
+	return true;
 }
