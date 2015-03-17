@@ -357,7 +357,7 @@ static int arm11Kxploit()
 
 static inline void synci()
 {
-	__asm__("mov r0, #0\n"
+	asm volatile("mov r0, #0\n"
 		"mcr p15, 0, r0, c7, c10, 0\n" // Clean Dcache
 		"mcr p15, 0, r0, c7, c5, 0\n" // Invalidate Icache
 		::: "r0");
@@ -371,7 +371,7 @@ static int arm9Exploit()
 		|| arm11PayloadTop == NULL || arm11PayloadBtm == NULL)
 		return -EFAULT;
 
-	__asm__("clrex");
+	asm volatile("clrex");
 
 	// ARM9 code copied to FCRAM 0x23F00000
 	memcpy((void *)((uintptr_t)sharedPtr | 0x03F00000),
@@ -403,7 +403,7 @@ static void test()
 static void __attribute__((naked)) arm11Kexec()
 {
 
-	__asm__("add sp, sp, #8\n");
+	asm volatile("add sp, sp, #8\n");
 
 	// Fix up memory
 	if (createThreadPatchPtr != NULL)
@@ -422,7 +422,7 @@ static void __attribute__((naked)) arm11Kexec()
 
 	arm9Exploit();
 
-	__asm__("movs r0, #0\n"
+	asm volatile("movs r0, #0\n"
 		 "pop {pc}\n");
 }
 
@@ -465,13 +465,13 @@ bool exploit()
 #ifdef DEBUG_PROCESS
 	puts("Executing code under ARM11 Kernel");
 #endif
-	__asm__("ldr r0, =%0\n"
+	asm volatile("ldr r0, =%0\n"
 		"svc #8\n"
 		:: "i"(arm11Kexec) : "r0");
 #ifdef DEBUG_PROCESS
 	if (svcIsPatched) {
 		puts("Testing SVC 0x7B");
-		__asm__("ldr r0, =%0\n"
+		asm volatile("ldr r0, =%0\n"
 			"svc #0x7B\n"
 			:: "i"(test) : "r0");
 	}
