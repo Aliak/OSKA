@@ -45,9 +45,6 @@ static void *sharedPtr = NULL;
 static int32_t *arm11Payload = NULL;
 static int32_t *hook0 = NULL;
 static int32_t *hook1 = NULL;
-#ifdef DEBUG_PROCESS
-static int svcIsPatched = 0;
-#endif
 
 static int gshaxCopy(void *dst, void *src, unsigned int len)
 {
@@ -394,12 +391,6 @@ static int arm9Exploit()
 	return reboot(0, 0, 2, 0);
 }
 
-#ifdef DEBUG_PROCESS
-static void test()
-{
-}
-#endif
-
 static void __attribute__((naked)) arm11Kexec()
 {
 
@@ -413,9 +404,6 @@ static void __attribute__((naked)) arm11Kexec()
 	if (svcPatchPtr != NULL) {
 		svcPatchPtr[0] = nop;
 		svcPatchPtr[2] = nop;
-#ifdef DEBUG_PROCESS
-		svcIsPatched = 1;
-#endif
 	}
 
 	synci();
@@ -426,7 +414,7 @@ static void __attribute__((naked)) arm11Kexec()
 		 "pop {pc}\n");
 }
 
-bool exploit()
+int exploit()
 {
 	u32 result;
 	u32 *p;
@@ -467,15 +455,8 @@ bool exploit()
 #endif
 	asm volatile("ldr r0, =%0\n"
 		"svc #8\n"
+		"b -4\n"
 		:: "i"(arm11Kexec) : "r0");
-#ifdef DEBUG_PROCESS
-	if (svcIsPatched) {
-		puts("Testing SVC 0x7B");
-		asm volatile("ldr r0, =%0\n"
-			"svc #0x7B\n"
-			:: "i"(test) : "r0");
-	}
-#endif
 
-	return true;
+	return 0;
 }

@@ -18,6 +18,4 @@
  
 #pragma once
 
-#include <stdbool.h>
-
-bool exploit();
+int exploit();
