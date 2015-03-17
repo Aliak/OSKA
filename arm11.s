@@ -16,8 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-@ Subroutines are allowed to overwrite only r0, r1 and r2
-
 	.arch armv6k
 	.data
 	.align 2
@@ -39,6 +37,8 @@ pxiReg:
 hook0ret:
 	nop
 
+
+@ Subroutines for hook0 are allowed to overwrite only r0, r1 and r2
 .hook0:
 	push	{ r1, r2, lr }
 
@@ -62,7 +62,7 @@ hook0ret:
 	bl	.delay
 
 	pop	{ r1, r2, lr }
-	ldr	r0, .payloadPxiCmd
+	ldr	r0, .hook0pxiCmd
 	str	r0, [r1]
 	ldr	pc, hook0ret
 
@@ -125,7 +125,7 @@ hook0ret:
 .payloadRegPxiSend:
 	.word	0x10163008
 .payloadPxiCmd:
-	.word	0x44836
+	.word	0x44846
 .payloadRegShared:
 	.word	0x10141000
 .payloadArm9Ptr:
@@ -164,6 +164,9 @@ hook0ret:
 	bne	.pxiRecvLoop
 	ldr	r0, [r0, #12]
 	bx	lr
+
+.hook0pxiCmd:
+	.word	0x44836
 
 .payloadDst:
 	.word	0x1FFFFC00
